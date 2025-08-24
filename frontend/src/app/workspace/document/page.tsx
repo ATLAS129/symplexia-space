@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import TaskCard from "@/components/TaskCard";
-import Avatar from "@/components/ui/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 
 export default function DocumentPage() {
@@ -12,9 +12,9 @@ export default function DocumentPage() {
       <section className="flex-1 p-7">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-semibold">Design Spec — Homepage</h3>
+            <h3 className="text-xl font-semibold">Document</h3>
             <div className="text-slate-400 text-sm">
-              Collaborative rich-text document • Yjs
+              Collaborative rich-text document
             </div>
           </div>
 

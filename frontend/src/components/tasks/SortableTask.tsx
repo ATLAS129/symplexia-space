@@ -1,5 +1,5 @@
 import { useSortable } from "@dnd-kit/sortable";
-import Avatar from "../ui/Avatar";
+import { Avatar } from "../ui/Avatar";
 import { Badge } from "../ui/Badge";
 import { Task } from "@/types/types";
 import { CSS } from "@dnd-kit/utilities";
@@ -15,21 +15,29 @@ export default function SortableTask({
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
+
+  // avoid writing "transform: undefined" when there's no transform
+  const transformStyle = transform
+    ? CSS.Transform.toString(transform)
+    : undefined;
+  const style: React.CSSProperties = {
+    ...(transformStyle ? { transform: transformStyle } : {}),
     transition,
-    touchAction: "manipulation" as const,
+    touchAction: "manipulation",
   };
 
   return (
     <div
       ref={setNodeRef}
+      data-task-id={id}
       style={style}
       {...attributes}
       {...listeners}
-      className={`rounded-xl p-3 border ${
+      role="listitem"
+      tabIndex={0}
+      className={`rounded-xl p-3 border bg-gradient-to-b from-black/60 to-black/30 shadow-md cursor-grab focus:outline-none focus:ring-2 focus:ring-indigo-400/30 ${
         dragging ? "ring-2 ring-indigo-400/40" : "border-white/6"
-      } bg-gradient-to-b from-black/60 to-black/30 shadow-md cursor-grab`}
+      }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">

@@ -1,7 +1,7 @@
 "use client";
 
 import NavItem from "@/components/NavItem";
-import Avatar from "@/components/ui/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { redirect, usePathname } from "next/navigation";
 
 const sideBars = ["Documents", "Tasks", "Members", "Settings"];

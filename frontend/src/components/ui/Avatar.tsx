@@ -1,4 +1,4 @@
-export default function Avatar({
+export function Avatar({
   initials,
   small,
 }: {

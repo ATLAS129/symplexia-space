@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   DndContext,
   closestCenter,
@@ -16,7 +16,6 @@ import {
   SortableContext,
   arrayMove,
   verticalListSortingStrategy,
-  useSortable,
 } from "@dnd-kit/sortable";
 
 import { Button } from "@/components/ui/Button";
@@ -83,6 +82,9 @@ export default function TasksPage() {
   const [board, setBoard] = useState<BoardState>(initialBoard);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draggingTask, setDraggingTask] = useState<Task | null>(null);
+  // last known pointer Y while dragging (used to decide insert before/after)
+  const [pointerX, setPointerX] = useState<number | null>(null);
+  const [pointerY, setPointerY] = useState<number | null>(null);
 
   // new task dialog state
   const [openNew, setOpenNew] = useState(false);
@@ -108,65 +110,127 @@ export default function TasksPage() {
   };
 
   const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    setActiveId(active.id as string);
-    const col = findColumnOf(active.id as string);
+    const active = event?.active;
+    const activeId = active?.id as string | undefined;
+    if (!active || !activeId) return;
+    setActiveId(activeId);
+    const col = findColumnOf(activeId);
     if (col) {
-      const t = board[col].find((x) => x.id === (active.id as string)) ?? null;
-      setDraggingTask(t ?? null);
+      const t = board[col].find((x) => x.id === activeId) ?? null;
+      setDraggingTask(t);
     }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveId(null);
-    setDraggingTask(null);
+    try {
+      const active = event?.active;
+      const over = event?.over;
+      const activeId = active?.id as string | undefined;
+      const overId = over?.id as string | undefined;
 
-    if (!over) return;
+      // clear UI drag state immediately
+      setActiveId(null);
+      setDraggingTask(null);
 
-    // dest could be a column id (we made columns droppable) or a task id
-    const overId = over.id as string;
+      if (!activeId || !overId) return;
 
-    // check if overId is a column
-    const isOverColumn = (Object.keys(board) as string[]).includes(overId);
+      const isOverColumn = (Object.keys(board) as string[]).includes(overId);
 
-    const sourceCol = findColumnOf(active.id as string);
-    const destCol = isOverColumn ? (overId as Columns) : findColumnOf(overId);
+      const sourceCol = findColumnOf(activeId);
+      const destCol = isOverColumn ? (overId as Columns) : findColumnOf(overId);
+      if (!sourceCol || !destCol) return;
 
-    if (!sourceCol || !destCol) return;
+      const sourceIndex = board[sourceCol].findIndex((t) => t.id === activeId);
+      if (sourceIndex < 0) return;
 
-    const sourceIndex = board[sourceCol].findIndex((t) => t.id === active.id);
-    // if over is a column, place at end
-    const destIndex =
-      isOverColumn === true
-        ? board[destCol].length
-        : board[destCol].findIndex((t) => t.id === overId);
+      const destIndex =
+        isOverColumn === true
+          ? board[destCol].length
+          : board[destCol].findIndex((t) => t.id === overId);
 
-    // same column reorder
-    if (sourceCol === destCol) {
-      if (sourceIndex !== destIndex && destIndex >= 0) {
-        setBoard((prev) => ({
-          ...prev,
-          [sourceCol]: arrayMove(prev[sourceCol], sourceIndex, destIndex),
-        }));
+      // same column reorder (simple case)
+      if (sourceCol === destCol) {
+        if (destIndex >= 0 && sourceIndex !== destIndex) {
+          setBoard((prev) => ({
+            ...prev,
+            [sourceCol]: arrayMove(prev[sourceCol], sourceIndex, destIndex),
+          }));
+        }
+        return;
       }
-      return;
+
+      // cross-column move: decide whether to insert before or after the over-task
+      let insertAt = destIndex >= 0 ? destIndex : board[destCol].length;
+
+      if (!isOverColumn && destIndex >= 0 && pointerY != null) {
+        // try to find the target DOM element for overId
+        const overEl = document.querySelector(
+          `[data-task-id="${overId}"]`
+        ) as HTMLElement | null;
+        if (overEl) {
+          const rect = overEl.getBoundingClientRect();
+          // if pointer is below the vertical midpoint of the target element, insert after
+          if (pointerY > rect.top + rect.height / 2) {
+            insertAt = destIndex + 1;
+          } else {
+            insertAt = destIndex;
+          }
+        }
+      }
+
+      const taskToMove = board[sourceCol][sourceIndex];
+      if (!taskToMove) return;
+
+      setBoard((prev) => {
+        const newSource = prev[sourceCol].filter((t) => t.id !== activeId);
+        const newDest = [...prev[destCol]];
+        const at = Math.min(Math.max(insertAt, 0), newDest.length);
+        newDest.splice(at, 0, taskToMove);
+        return { ...prev, [sourceCol]: newSource, [destCol]: newDest };
+      });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("handleDragEnd error:", err);
+    } finally {
+      // reset pointer tracking after drop
+      setPointerY(null);
+    }
+  };
+
+  // track pointer Y during drag (mouse and touch) so we can decide before/after on drop
+  useEffect(() => {
+    function onMove(e: MouseEvent | TouchEvent) {
+      if (e instanceof TouchEvent) {
+        const t = e.touches?.[0];
+        setPointerX(t?.clientX ?? null);
+        setPointerY(t?.clientY ?? null);
+      } else {
+        const ev = e as MouseEvent;
+        setPointerX(ev.clientX);
+        setPointerY(ev.clientY);
+      }
     }
 
-    // cross-column move
-    const taskToMove = board[sourceCol][sourceIndex];
-    setBoard((prev) => {
-      const newSource = prev[sourceCol].filter((t) => t.id !== active.id);
-      const newDest = [...prev[destCol]];
-      const insertAt = destIndex >= 0 ? destIndex : newDest.length;
-      newDest.splice(insertAt, 0, taskToMove);
-      return { ...prev, [sourceCol]: newSource, [destCol]: newDest };
-    });
-  };
+    if (activeId) {
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("touchmove", onMove, { passive: true });
+      return () => {
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("touchmove", onMove);
+        setPointerX(null);
+        setPointerY(null);
+      };
+    }
+    // cleanup when not dragging
+    setPointerX(null);
+    setPointerY(null);
+    return;
+  }, [activeId]);
 
   const submitNewTask = () => {
     const newTask: Task = {
-      id: new Date().toDateString(),
+      // changed: use a stable unique id
+      id: Date.now().toString(),
       title: newTitle.trim() || "Untitled task",
       assignee: {
         name: newAssignee,
@@ -194,7 +258,7 @@ export default function TasksPage() {
       <main className="flex-1 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-semibold">Project Board</h1>
+            <h1 className="text-2xl font-semibold">Tasks</h1>
             <div className="text-xs text-slate-400">
               Kanban • Drag & drop • AI helpers
             </div>
@@ -257,78 +321,84 @@ export default function TasksPage() {
         </div>
 
         {/* DnD context around columns */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={(e) => handleDragStart(e as DragStartEvent)}
-          onDragEnd={handleDragEnd}
-          onDragCancel={() => {
-            setActiveId(null);
-            setDraggingTask(null);
-          }}
-          dropAnimation={{
-            sideEffects: defaultDropAnimationSideEffects({
-              styles: {
-                active: {
-                  opacity: "0.8",
+        <div className="rounded-xl bg-gradient-to-b from-black/40 to-black/20 p-4">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={(e) => handleDragStart(e as DragStartEvent)}
+            onDragEnd={handleDragEnd}
+            onDragCancel={() => {
+              setActiveId(null);
+              setDraggingTask(null);
+            }}
+            dropAnimation={{
+              sideEffects: defaultDropAnimationSideEffects({
+                styles: {
+                  active: {
+                    opacity: "0.8",
+                  },
                 },
-              },
-            }),
-          }}
-        >
-          <div className="flex gap-6">
-            {columnOrder.map((colId) => {
-              const columnTasks = board[colId];
-              return (
-                <DroppableColumn
-                  key={colId}
-                  id={colId}
-                  className="w-80 flex flex-col"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold capitalize">
-                      {colId === "todo"
-                        ? "To do"
-                        : colId === "inprogress"
-                        ? "In progress"
-                        : "Done"}
-                    </h3>
-                    <div className="text-xs text-slate-400">
-                      {columnTasks.length}
-                    </div>
-                  </div>
-
-                  <SortableContext
-                    items={columnTasks.map((t) => t.id)}
-                    strategy={verticalListSortingStrategy}
+              }),
+            }}
+          >
+            <div className="flex justify-between gap-6">
+              {columnOrder.map((colId) => {
+                const columnTasks = board[colId];
+                return (
+                  <DroppableColumn
+                    key={colId}
+                    id={colId}
+                    className="w-1/3 min-h-screen flex flex-col"
+                    // provide pointer and active drag id so the column can detect pointer hover even when nested items are droppables
+                    activeDragId={activeId}
+                    pointerX={pointerX}
+                    pointerY={pointerY}
                   >
-                    <div className="flex-1 flex flex-col gap-3 min-h-[200px]">
-                      {columnTasks.length === 0 ? (
-                        <div className="rounded-lg p-4 border border-dashed border-white/6 text-slate-400 text-sm">
-                          No tasks yet — drop here or create one
-                        </div>
-                      ) : (
-                        columnTasks.map((task) => (
-                          <SortableTask
-                            key={task.id}
-                            id={task.id}
-                            task={task}
-                            dragging={activeId === task.id}
-                          />
-                        ))
-                      )}
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold capitalize">
+                        {colId === "todo"
+                          ? "To do"
+                          : colId === "inprogress"
+                          ? "In progress"
+                          : "Done"}
+                      </h3>
+                      <div className="text-xs text-slate-400">
+                        {columnTasks.length}
+                      </div>
                     </div>
-                  </SortableContext>
-                </DroppableColumn>
-              );
-            })}
-          </div>
 
-          {/* Drag overlay preview */}
-          <DragOverlay>
-            {draggingTask ? <DragPreview task={draggingTask} /> : null}
-          </DragOverlay>
-        </DndContext>
+                    <SortableContext
+                      items={columnTasks.map((t) => t.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="flex-1 flex flex-col gap-3 h-full">
+                        {columnTasks.length === 0 ? (
+                          <div className="rounded-lg p-4 border border-dashed border-white/6 text-slate-400 text-sm">
+                            No tasks yet — drop here or create one
+                          </div>
+                        ) : (
+                          columnTasks.map((task) => (
+                            <SortableTask
+                              key={task.id}
+                              id={task.id}
+                              task={task}
+                              dragging={activeId === task.id}
+                            />
+                          ))
+                        )}
+                      </div>
+                    </SortableContext>
+                  </DroppableColumn>
+                );
+              })}
+            </div>
+
+            {/* Drag overlay preview */}
+            <DragOverlay>
+              {draggingTask ? <DragPreview task={draggingTask} /> : null}
+            </DragOverlay>
+          </DndContext>
+        </div>
       </main>
 
       {/* Right panel */}

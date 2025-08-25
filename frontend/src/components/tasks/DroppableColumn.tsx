@@ -42,10 +42,7 @@ export default function DroppableColumn({
   ) {
     const rect = localRef.current.getBoundingClientRect();
     pointerInside =
-      pointerX >= rect.left &&
-      pointerX <= rect.right &&
-      pointerY >= rect.top &&
-      pointerY <= rect.bottom;
+      pointerX >= rect.left && pointerX <= rect.right && pointerY >= rect.top;
   }
 
   const isActive = isOver || pointerInside;

@@ -6,5 +6,12 @@ export type Task = {
   due?: string;
 };
 
+export type Document = {
+  id: number;
+  title: string;
+  description: string;
+  createdAt: Date;
+};
+
 export type Columns = "todo" | "inprogress" | "done";
 export type BoardState = Record<Columns, Task[]>;

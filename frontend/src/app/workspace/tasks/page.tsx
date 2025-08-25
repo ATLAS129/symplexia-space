@@ -348,7 +348,7 @@ export default function TasksPage() {
                   <DroppableColumn
                     key={colId}
                     id={colId}
-                    className="w-1/3 min-h-screen flex flex-col"
+                    className="w-1/3 flex flex-col"
                     // provide pointer and active drag id so the column can detect pointer hover even when nested items are droppables
                     activeDragId={activeId}
                     pointerX={pointerX}

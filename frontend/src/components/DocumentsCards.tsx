@@ -10,22 +10,18 @@ import {
   CardHeader,
   CardTitle,
   CardAction,
+  CardFooter,
 } from "./ui/Card";
-
-interface Cards {
-  id: number;
-  title: string;
-  description: string;
-}
+import { Document } from "@/types/types";
 
 export default function DocumentsCards({
-  initialCards,
+  documents,
 }: {
-  initialCards: Cards[];
+  documents: Document[];
 }) {
   return (
     <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
-      {initialCards?.map((card: Cards) => (
+      {documents?.map((card: Document) => (
         <Card
           key={card.id}
           className={`rounded-xl border-slate-800 bg-gradient-to-b from-black/60 to-black/30 shadow-md text-white`}
@@ -48,6 +44,30 @@ export default function DocumentsCards({
             </CardAction>
           </CardHeader>
           <CardContent>IMAGE OF DOC</CardContent>
+          <CardFooter className="flex justify-end items-end">
+            <div className="text-xs text-slate-400">
+              {(() => {
+                const d = card.createdAt;
+                const now = new Date();
+                const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+                const time = d.toTimeString().slice(0, 5);
+                const date =
+                  now.getTime() - d.getTime() > oneYearMs
+                    ? d.toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
+                    : d.toDateString() === now.toDateString()
+                    ? "Today"
+                    : d.toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                      });
+                return `${date}, ${time}`;
+              })()}
+            </div>
+          </CardFooter>
         </Card>
       ))}
     </div>

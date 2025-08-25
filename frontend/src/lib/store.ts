@@ -1,22 +1,26 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
-import { persistReducer, persistStore } from "redux-persist";
-import storage from "redux-persist/lib/storage"; // defaults to localStorage
 import authReducer from "./states/authSlice";
 
 const rootReducer = combineReducers({ auth: authReducer });
-
-const persistConfig = {
-  key: "root",
-  storage,
-};
-
-const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const makeStore = () => {
   const isServer = typeof window === "undefined";
   if (isServer) {
     return configureStore({ reducer: rootReducer });
   } else {
+    // require redux-persist here to avoid accessing localStorage during SSR/build
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { persistReducer, persistStore } = require("redux-persist");
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const storage = require("redux-persist/lib/storage").default;
+
+    const persistConfig = {
+      key: "root",
+      storage,
+    };
+
+    const persistedReducer = persistReducer(persistConfig, rootReducer);
+
     const store = configureStore({
       reducer: persistedReducer,
       middleware: (getDefaultMiddleware) =>

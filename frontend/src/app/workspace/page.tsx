@@ -13,57 +13,48 @@ import {
   DialogDescription,
 } from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/Select";
-import { Task } from "@/types/types";
+import { Document } from "@/types/types";
 
-const initialCards = [
+const initialCards: Document[] = [
   {
     id: 1,
     title: "Finances",
     description: "calculating moneeey",
+    createdAt: new Date("2024-02-04"),
   },
   {
     id: 2,
     title: "Thoughts",
     description: "big ideasss",
+    createdAt: new Date("2024-02-04"),
   },
   {
     id: 3,
     title: "Library",
     description: "books for rich people lol",
+    createdAt: new Date("2025-02-04"),
   },
 ];
 
 export default function WorkspacePage() {
+  const [documents, setDocuments] = useState(initialCards);
   const [openNew, setOpenNew] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newAssignee, setNewAssignee] = useState("Eli");
-  const [newPriority, setNewPriority] = useState<"Low" | "Medium" | "High">(
-    "Medium"
-  );
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("Eli");
 
-  const submitNewTask = () => {
-    const newTask: Task = {
+  const submitNewDocument = () => {
+    const newDocument: Document = {
       // changed: use a stable unique id
-      id: Date.now().toString(),
-      title: newTitle.trim() || "Untitled task",
-      assignee: {
-        name: newAssignee,
-        initials: newAssignee.slice(0, 2).toUpperCase(),
-      },
-      priority: newPriority,
-      due: "TBD",
+      id: Math.floor(Math.random() * 1000000),
+      title: title.trim() || "Untitled task",
+      description: description.trim() || "No description",
+      createdAt: new Date(),
     };
+
+    setDocuments([...documents, newDocument]);
     // reset
-    setNewTitle("");
-    setNewAssignee("Eli");
-    setNewPriority("Medium");
+    setTitle("");
+    setDescription("Eli");
     setOpenNew(false);
   };
 
@@ -74,9 +65,7 @@ export default function WorkspacePage() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-semibold">Documents</h1>
-              <div className="text-lg text-slate-400">
-                {initialCards.length}
-              </div>
+              <div className="text-lg text-slate-400">{documents.length}</div>
             </div>
 
             <div className="text-xs text-slate-400">Editor • AI</div>
@@ -98,15 +87,15 @@ export default function WorkspacePage() {
                 <div className="grid gap-3 py-2">
                   <label className="text-xs text-slate-400">Title</label>
                   <Input
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
                     placeholder="Fix signup flow"
                   />
 
                   <label className="text-xs text-slate-400">Assignee</label>
                   <Input
-                    value={newAssignee}
-                    onChange={(e) => setNewAssignee(e.target.value)}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                     placeholder="Eli"
                   />
                 </div>
@@ -115,7 +104,7 @@ export default function WorkspacePage() {
                   <Button variant="ghost" onClick={() => setOpenNew(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={submitNewTask}>Create document</Button>
+                  <Button onClick={submitNewDocument}>Create document</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -123,7 +112,7 @@ export default function WorkspacePage() {
             <Button variant="outline">Filter</Button>
           </div>
         </div>
-        <DocumentsCards initialCards={initialCards} />
+        <DocumentsCards documents={documents} />
       </section>
     </>
   );

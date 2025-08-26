@@ -402,48 +402,51 @@ export default function TasksPage() {
       </main>
 
       {/* Right panel */}
-      {/* <aside className="w-80 p-6 border-l border-white/6 bg-gradient-to-b from-black/30 to-transparent">
-        <div className="flex items-center justify-between">
-          <h4 className="font-semibold">AI Tools</h4>
-          <div className="text-xs text-slate-400">beta</div>
-        </div>
-
-        <div className="mt-4 space-y-3">
-          <Button
-            onClick={() => alert("Summarize board (stub)")}
-            className="w-full bg-indigo-600 hover:bg-indigo-700"
-          >
-            Summarize board
-          </Button>
-          <Button
-            onClick={() => alert("Draft tasks from selection (stub)")}
-            className="w-full"
-          >
-            Auto-draft tasks
-          </Button>
-          <Button
-            onClick={() => alert("Auto-assign (stub)")}
-            className="w-full"
-          >
-            Auto-assign
-          </Button>
-        </div>
-
-        <div className="mt-6">
-          <div className="text-xs text-slate-400 mb-2">Quick filters</div>
-          <div className="grid gap-2">
-            <Button variant="ghost" className="justify-start">
-              Assigned to me
+      <aside className="max-w-1/5 w-1/5 border-l border-white/6 bg-gradient-to-b from-black/30 to-transparent flex justify-center">
+        <div className="fixed p-6">
+          <div className="flex pb-3 items-center justify-end gap-4 border-b border-slate-800">
+            {/* <div className="rounded-full bg-white/6 px-3 py-1 text-xs">
+            Workspace • Symplexia
+          </div> */}
+            <input
+              className="hidden md:inline-block rounded-2xl bg-white/4 px-3 py-2 text-sm"
+              placeholder="Search docs, tasks, agents..."
+            />
+            <div className="w-9 h-9 rounded-full bg-gradient-to-r from-pink-500 to-indigo-500 grid place-items-center">
+              Y
+            </div>
+          </div>
+          <div className="pt-3 flex items-center justify-between">
+            <h4 className="font-semibold">AI Tools</h4>
+            <div className="text-xs text-slate-400">beta</div>
+          </div>
+          <div className="mt-4 space-y-3">
+            <Button className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 font-semibold">
+              Summarize selection
             </Button>
-            <Button variant="ghost" className="justify-start">
-              Due soon
+            <Button className="w-full px-4 py-3 rounded-xl bg-white/6">
+              Draft task
             </Button>
-            <Button variant="ghost" className="justify-start">
-              High priority
+            <Button className="w-full px-4 py-3 rounded-xl border border-white/6">
+              Suggest next steps
             </Button>
           </div>
+          <div className="mt-6">
+            <div className="text-xs text-slate-400 mb-2">Quick filters</div>
+            <div className="grid gap-2">
+              <Button variant="ghost" className="justify-start">
+                Assigned to me
+              </Button>
+              <Button variant="ghost" className="justify-start">
+                Due soon
+              </Button>
+              <Button variant="ghost" className="justify-start">
+                High priority
+              </Button>
+            </div>
+          </div>
         </div>
-      </aside> */}
+      </aside>
     </>
   );
 }

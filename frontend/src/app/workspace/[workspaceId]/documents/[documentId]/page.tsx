@@ -20,9 +20,9 @@ export default function DocumentPage() {
 
           <div className="flex items-center gap-3">
             <div className="flex -space-x-2">
-              <Avatar initials="EL" small />
-              <Avatar initials="MK" small />
-              <Avatar initials="JS" small />
+              <Avatar />
+              <Avatar />
+              <Avatar />
             </div>
             <Button className="px-3 py-1 rounded-lg bg-white/6">Share</Button>
           </div>

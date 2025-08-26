@@ -1,13 +1,16 @@
-"use client";
-
 import NavItem from "@/components/NavItem";
 import { Avatar } from "@/components/ui/Avatar";
-import { redirect, usePathname } from "next/navigation";
 
 const sideBars = ["Documents", "Tasks", "Members", "Settings"];
 
-export default function layout({ children }: { children: React.ReactNode }) {
-  const pathName = usePathname();
+export default async function layout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Readonly<Promise<{ workspaceId: string }>>;
+}) {
+  const { workspaceId } = await params;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -29,17 +32,20 @@ export default function layout({ children }: { children: React.ReactNode }) {
                 <NavItem
                   key={sideBars[i]}
                   label={sideBars[i]}
-                  onClick={() =>
-                    redirect(
-                      `http://localhost:3000/workspace/${
-                        i !== 0 ? sideBars[i].toLowerCase() : ""
-                      }`
-                    )
-                  }
-                  active={
-                    pathName.slice(1).replace("workspace/", "") ===
-                    sideBars[i].toLowerCase()
-                  }
+                  workspaceId={workspaceId}
+                  // onClick={() =>
+                  //   redirect(
+                  //     `http://localhost:3000/workspace/${workspaceId}/${
+                  //       i !== 0 ? sideBars[i].toLowerCase() : ""
+                  //     }`
+                  //   )
+                  // }
+                  // active={
+                  //   pathName
+                  //     .slice(1)
+                  //     .replace(`workspace/${workspaceId}`, "") ===
+                  //   sideBars[i].toLowerCase()
+                  // }
                 />
               ))}
             {/* <NavItem
@@ -57,9 +63,9 @@ export default function layout({ children }: { children: React.ReactNode }) {
           <div className="mt-8">
             <div className="text-xs text-slate-400">Members online</div>
             <div className="mt-3 flex -space-x-3">
-              <Avatar initials="EL" />
-              <Avatar initials="MK" />
-              <Avatar initials="JS" />
+              <Avatar />
+              <Avatar />
+              <Avatar />
               <div className="w-8 h-8 rounded-full grid place-items-center bg-white/6 text-xs">
                 +3
               </div>

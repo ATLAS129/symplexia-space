@@ -24,15 +24,15 @@ const initialCards: Document[] = [
   },
   {
     id: 2,
-    title: "Thoughts",
-    description: "big ideasss",
-    createdAt: new Date("2024-02-04"),
+    title: "Project plan",
+    description: "Outline for Q2 launch",
+    createdAt: new Date(),
   },
   {
     id: 3,
     title: "Library",
     description: "books for rich people lol",
-    createdAt: new Date("2025-02-04"),
+    createdAt: new Date("2025-08-26"),
   },
 ];
 
@@ -65,7 +65,9 @@ export default function WorkspacePage() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-semibold">Documents</h1>
-              <div className="text-lg text-slate-400">{documents.length}</div>
+              <div className="text-lg rounded-full bg-slate-800 w-7 h-7 flex justify-center items-center text-white translate-y-0.5">
+                {documents.length}
+              </div>
             </div>
 
             <div className="text-xs text-slate-400">Editor • AI</div>
@@ -74,7 +76,7 @@ export default function WorkspacePage() {
           <div className="flex items-center gap-3">
             <Dialog open={openNew} onOpenChange={setOpenNew}>
               <DialogTrigger asChild>
-                <Button className="bg-indigo-600 hover:bg-indigo-700">
+                <Button className="bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-600">
                   + New Document
                 </Button>
               </DialogTrigger>
@@ -109,7 +111,9 @@ export default function WorkspacePage() {
               </DialogContent>
             </Dialog>
 
-            <Button variant="outline">Filter</Button>
+            <Button className="bg-gradient-to-b from-indigo-600 to-indigo-500 hover:to-indigo-600">
+              Filter
+            </Button>
           </div>
         </div>
         <DocumentsCards documents={documents} />

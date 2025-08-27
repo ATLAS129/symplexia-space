@@ -39,9 +39,11 @@ export default function MainPage() {
           </div>
 
           <div className="mt-8 flex gap-4">
-            <Button className="px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-500 shadow-lg font-semibold">
-              <Link href="/workspace">Get started</Link>
-            </Button>
+            <Link href="/workspace">
+              <Button className="px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-500 shadow-lg font-semibold">
+                Get started
+              </Button>
+            </Link>
             <Button className="px-6 py-3 rounded-2xl bg-white/6 hover:bg-white/8 transition">
               See demo
             </Button>

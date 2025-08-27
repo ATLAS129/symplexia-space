@@ -267,7 +267,7 @@ export default function TasksPage() {
           <div className="flex items-center gap-3">
             <Dialog open={openNew} onOpenChange={setOpenNew}>
               <DialogTrigger asChild>
-                <Button className="bg-indigo-600 hover:bg-indigo-700">
+                <Button className="bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-600">
                   + New Task
                 </Button>
               </DialogTrigger>
@@ -316,7 +316,9 @@ export default function TasksPage() {
               </DialogContent>
             </Dialog>
 
-            <Button variant="outline">Filter</Button>
+            <Button className="bg-gradient-to-b from-indigo-600 to-indigo-500 hover:to-indigo-600">
+              Filter
+            </Button>
           </div>
         </div>
 

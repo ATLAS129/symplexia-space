@@ -24,7 +24,7 @@ export default function DocumentsCards({
       {documents?.map((card: Document) => (
         <Card
           key={card.id}
-          className={`rounded-xl border-slate-800 bg-gradient-to-b from-black/60 to-black/30 shadow-md text-white`}
+          className="w-full h-full rounded-xl border-slate-800 bg-gradient-to-b from-black/60 to-black/30 shadow-md text-white"
         >
           <CardHeader>
             <div className="flex gap-2 items-center">
@@ -33,38 +33,51 @@ export default function DocumentsCards({
                 <CardTitle className="flex items-center gap-3">
                   {card.title}
                 </CardTitle>
-                <CardDescription>{card.description}</CardDescription>
+                <CardDescription></CardDescription>
               </div>
             </div>
 
             <CardAction>
-              <Button variant="default">
-                <Link href="/workspace/document">Open</Link>
-              </Button>
+              <Link href={`documents/${card.id}`}>
+                <Button variant="default">Open</Button>
+              </Link>
             </CardAction>
           </CardHeader>
-          <CardContent>IMAGE OF DOC</CardContent>
+          <CardContent>{card.description}</CardContent>
           <CardFooter className="flex justify-end items-end">
             <div className="text-xs text-slate-400">
               {(() => {
-                const d = card.createdAt;
+                const d = new Date(card.createdAt);
                 const now = new Date();
-                const oneYearMs = 365 * 24 * 60 * 60 * 1000;
-                const time = d.toTimeString().slice(0, 5);
-                const date =
-                  now.getTime() - d.getTime() > oneYearMs
+                const msPerDay = 24 * 60 * 60 * 1000;
+                const midnight = (t: Date) =>
+                  new Date(t.getFullYear(), t.getMonth(), t.getDate());
+                const diffDays = Math.round(
+                  (midnight(now).getTime() - midnight(d).getTime()) / msPerDay
+                );
+                const oneYear = 365 * msPerDay;
+                const time = d.toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+
+                const dateLabel =
+                  now.getTime() - d.getTime() > oneYear
                     ? d.toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
                       })
-                    : d.toDateString() === now.toDateString()
+                    : diffDays === 0
                     ? "Today"
+                    : diffDays === 1
+                    ? "Yesterday"
                     : d.toLocaleDateString("en-US", {
                         month: "long",
                         day: "numeric",
                       });
-                return `${date}, ${time}`;
+
+                return `${dateLabel}, ${time}`;
               })()}
             </div>
           </CardFooter>

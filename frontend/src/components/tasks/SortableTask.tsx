@@ -41,10 +41,7 @@ export default function SortableTask({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Avatar
-            className="w-9 h-9"
-            fallback={task.assignee?.initials ?? "U"}
-          />
+          <Avatar className="w-9 h-9" />
           <div>
             <div className="font-medium text-sm leading-tight">
               {task.title}
@@ -57,12 +54,15 @@ export default function SortableTask({
 
         <div className="flex flex-col items-end gap-2">
           <Badge
-            variant={
-              task.priority === "High"
-                ? "destructive"
+            className={
+              "text-xs " +
+              (task.priority === "High"
+                ? "bg-red-600/20 text-red-400"
                 : task.priority === "Medium"
-                ? "secondary"
-                : "outline"
+                ? "bg-yellow-600/20 text-yellow-400"
+                : task.priority === "Low"
+                ? "bg-green-600/20 text-green-400"
+                : "bg-slate-600/20 text-slate-400")
             }
           >
             {task.priority ?? "—"}

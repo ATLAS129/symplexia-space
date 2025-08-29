@@ -47,7 +47,8 @@ export default function SortableTask({
               {task.title}
             </div>
             <div className="text-xs text-slate-400 mt-1">
-              {task.assignee?.name ?? "Unassigned"} · {task.due ?? "No due"}
+              {task.assignee?.name ?? "Unassigned"} ·{" "}
+              {task.createdAt ?? "No due"}
             </div>
           </div>
         </div>

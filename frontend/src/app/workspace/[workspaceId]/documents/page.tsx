@@ -64,13 +64,15 @@ export default function WorkspacePage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-semibold">Documents</h1>
-              <div className="text-lg rounded-full bg-slate-800 w-7 h-7 flex justify-center items-center text-white translate-y-0.5">
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+                Documents
+              </h1>
+              <div className="text-lg font-semibold rounded-full bg-slate-800 w-7 h-7 flex justify-center items-center text-white translate-y-0.5">
                 {documents.length}
               </div>
             </div>
 
-            <div className="text-xs text-slate-400">Editor • AI</div>
+            <p className="mt-1 text-slate-400 text-xs">Editor • AI</p>
           </div>
 
           <div className="flex items-center gap-3">

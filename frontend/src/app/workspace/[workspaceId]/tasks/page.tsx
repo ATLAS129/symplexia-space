@@ -28,6 +28,7 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
+  DialogClose,
 } from "@/components/ui/Dialog";
 import {
   Select,
@@ -40,6 +41,7 @@ import { BoardState, Columns, Task } from "@/types/types";
 import SortableTask from "@/components/tasks/SortableTask";
 import DragPreview from "@/components/tasks/DragPreview";
 import DroppableColumn from "@/components/tasks/DroppableColumn";
+import FilterModal from "@/components/FilterModal";
 
 const initialBoard: BoardState = {
   todo: [
@@ -48,14 +50,14 @@ const initialBoard: BoardState = {
       title: "Design system: tokens + components",
       assignee: { name: "Eli", initials: "EL" },
       priority: "High",
-      due: "Wed",
+      createdAt: "Wed",
     },
     {
       id: "t-2",
       title: "Write onboarding copy",
       assignee: { name: "Maya", initials: "MK" },
       priority: "Medium",
-      due: "Fri",
+      createdAt: "Fri",
     },
   ],
   inprogress: [
@@ -64,7 +66,7 @@ const initialBoard: BoardState = {
       title: "Realtime sync (Yjs) POC",
       assignee: { name: "Jon", initials: "JS" },
       priority: "High",
-      due: "Thu",
+      createdAt: "Thu",
     },
   ],
   done: [
@@ -73,7 +75,7 @@ const initialBoard: BoardState = {
       title: "Landing page hero",
       assignee: { name: "Eli", initials: "EL" },
       priority: "Low",
-      due: "Yesterday",
+      createdAt: "Yesterday",
     },
   ],
 };
@@ -87,7 +89,6 @@ export default function TasksPage() {
   const [pointerY, setPointerY] = useState<number | null>(null);
 
   // new task dialog state
-  const [openNew, setOpenNew] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newAssignee, setNewAssignee] = useState("Eli");
   const [newPriority, setNewPriority] = useState<"Low" | "Medium" | "High">(
@@ -96,8 +97,7 @@ export default function TasksPage() {
 
   // sensors: pointer + keyboard (keyboard supports accessible sorting)
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor)
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
   // helper: find column that contains id
@@ -237,35 +237,32 @@ export default function TasksPage() {
         initials: newAssignee.slice(0, 2).toUpperCase(),
       },
       priority: newPriority,
-      due: "TBD",
+      createdAt: new Date().toDateString().slice(0, 3),
     };
     setBoard((prev) => ({ ...prev, todo: [newTask, ...prev.todo] }));
     // reset
     setNewTitle("");
     setNewAssignee("Eli");
     setNewPriority("Medium");
-    setOpenNew(false);
   };
 
-  const columnOrder = useMemo(
-    () => ["todo", "inprogress", "done"] as Columns[],
-    []
-  );
-
+  const columnOrder = ["todo", "inprogress", "done"] as Columns[];
   return (
     <>
       {/* Main area */}
-      <main className="flex-1 p-6">
+      <section className="flex-1 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-semibold">Tasks</h1>
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+              Tasks
+            </h1>
             <div className="text-xs text-slate-400">
               Kanban • Drag & drop • AI helpers
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <Dialog open={openNew} onOpenChange={setOpenNew}>
+            <Dialog>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-600">
                   + New Task
@@ -308,17 +305,17 @@ export default function TasksPage() {
                 </div>
 
                 <DialogFooter>
-                  <Button variant="ghost" onClick={() => setOpenNew(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={submitNewTask}>Create task</Button>
+                  <DialogClose asChild>
+                    <Button variant="ghost">Cancel</Button>
+                  </DialogClose>
+                  <DialogClose asChild>
+                    <Button onClick={submitNewTask}>Create task</Button>
+                  </DialogClose>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
 
-            <Button className="bg-gradient-to-b from-indigo-600 to-indigo-500 hover:to-indigo-600">
-              Filter
-            </Button>
+            <FilterModal />
           </div>
         </div>
 
@@ -332,15 +329,6 @@ export default function TasksPage() {
             onDragCancel={() => {
               setActiveId(null);
               setDraggingTask(null);
-            }}
-            dropAnimation={{
-              sideEffects: defaultDropAnimationSideEffects({
-                styles: {
-                  active: {
-                    opacity: "0.8",
-                  },
-                },
-              }),
             }}
           >
             <div className="flex justify-between gap-6">
@@ -401,7 +389,7 @@ export default function TasksPage() {
             </DragOverlay>
           </DndContext>
         </div>
-      </main>
+      </section>
 
       {/* Right panel */}
       <aside className="max-w-1/5 w-1/5 border-l border-white/6 bg-gradient-to-b from-black/30 to-transparent flex justify-center">

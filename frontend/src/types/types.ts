@@ -3,7 +3,7 @@ export type Task = {
   title: string;
   assignee?: { name: string; initials: string; color?: string };
   priority?: "Low" | "Medium" | "High";
-  due?: string;
+  createdAt?: string;
 };
 
 export type Document = {

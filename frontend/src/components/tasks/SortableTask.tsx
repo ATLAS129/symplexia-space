@@ -35,7 +35,7 @@ export default function SortableTask({
       {...listeners}
       role="listitem"
       tabIndex={0}
-      className={`rounded-xl p-3 border bg-gradient-to-b from-black/60 to-black/30 shadow-md cursor-grab focus:outline-none focus:ring-2 focus:ring-indigo-400/30 ${
+      className={`rounded-xl p-3 border bg-gradient-to-b from-black/60 to-black/30 shadow-md cursor-grab focus:outline-none focus:ring-2 focus:ring-indigo-400/30 transition hover:scale-[1.01] ${
         dragging ? "ring-2 ring-indigo-400/40" : "border-white/6"
       }`}
     >

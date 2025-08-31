@@ -20,11 +20,11 @@ export default function DocumentsCards({
   documents: Document[];
 }) {
   return (
-    <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
       {documents?.map((card: Document) => (
         <Card
           key={card.id}
-          className="w-full h-full rounded-xl border-slate-800 bg-gradient-to-b from-black/60 to-black/30 shadow-md text-white"
+          className="w-full h-full rounded-xl border-slate-800 bg-gradient-to-b from-black/60 to-black/30 shadow-md text-white transition hover:scale-[1.01]"
         >
           <CardHeader>
             <div className="flex gap-2 items-center">

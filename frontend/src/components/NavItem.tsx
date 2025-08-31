@@ -26,7 +26,7 @@ export default function NavItem({
             : "hover:bg-white/5"
         }`}
       >
-        <div className="w-9 h-9 rounded-lg bg-white/6 grid place-items-center text-sm">
+        <div className="min-w-9 min-h-9 w-9 h-9 rounded-lg bg-white/6 grid place-items-center text-sm">
           {label[0]}
         </div>
         <div className="text-sm">{label}</div>

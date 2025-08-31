@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
 import { Document } from "@/types/types";
+import RightAside from "@/components/RightAside";
 
 const initialCards: Document[] = [
   {
@@ -122,52 +123,38 @@ export default function WorkspacePage() {
       </section>
 
       {/* Right */}
-      <aside className="max-w-1/5 w-1/5 border-l border-white/6 bg-gradient-to-b from-black/60 to-transparent flex justify-center">
-        <div className="fixed p-6">
-          <div className="flex pb-3 items-center justify-end gap-4 border-b border-slate-800">
-            {/* <div className="rounded-full bg-white/6 px-3 py-1 text-xs">
-            Workspace • Symplexia
-          </div> */}
-            <input
-              className="hidden md:inline-block rounded-2xl bg-white/4 px-3 py-2 text-sm"
-              placeholder="Search docs, tasks, agents..."
-            />
-            <div className="w-9 h-9 rounded-full bg-gradient-to-r from-pink-500 to-indigo-500 grid place-items-center">
-              Y
-            </div>
-          </div>
-          <div className="pt-3 flex items-center justify-between">
-            <div className="font-semibold">AI Assistant</div>
-            <div className="text-slate-400 text-xs">Context: Design Spec</div>
-          </div>
+      <RightAside>
+        <div className="pt-3 flex items-center justify-between">
+          <div className="font-semibold">AI Assistant</div>
+          <div className="text-slate-400 text-xs">Context: Design Spec</div>
+        </div>
 
-          <div className="mt-4 space-y-3">
-            <Button className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 font-semibold">
-              Summarize selection
-            </Button>
-            <Button className="w-full px-4 py-3 rounded-xl bg-white/6">
-              Draft task
-            </Button>
-            <Button className="w-full px-4 py-3 rounded-xl border border-white/6">
-              Suggest next steps
-            </Button>
-          </div>
+        <div className="mt-4 space-y-3">
+          <Button className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 font-semibold">
+            Summarize selection
+          </Button>
+          <Button className="w-full px-4 py-3 rounded-xl bg-white/6">
+            Draft task
+          </Button>
+          <Button className="w-full px-4 py-3 rounded-xl border border-white/6">
+            Suggest next steps
+          </Button>
+        </div>
 
-          <div className="mt-6 p-3 rounded-lg bg-white/3 text-sm">
-            <div className="font-medium">Quick summary</div>
-            <div className="text-slate-400 text-xs mt-2">
-              AI: "Focus on onboarding and hero copy. Convert features into
-              benefits."
-            </div>
-          </div>
-
-          <div className="mt-6 text-xs text-slate-400">
-            <div>• Daily summary (scheduled)</div>
-            <div>• Auto-extract todos</div>
-            <div>• Export audit logs</div>
+        <div className="mt-6 p-3 rounded-lg bg-white/3 text-sm">
+          <div className="font-medium">Quick summary</div>
+          <div className="text-slate-400 text-xs mt-2">
+            AI: "Focus on onboarding and hero copy. Convert features into
+            benefits."
           </div>
         </div>
-      </aside>
+
+        <div className="mt-6 text-xs text-slate-400">
+          <div>• Daily summary (scheduled)</div>
+          <div>• Auto-extract todos</div>
+          <div>• Export audit logs</div>
+        </div>
+      </RightAside>
     </>
   );
 }

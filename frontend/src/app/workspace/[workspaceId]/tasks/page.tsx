@@ -42,6 +42,7 @@ import SortableTask from "@/components/tasks/SortableTask";
 import DragPreview from "@/components/tasks/DragPreview";
 import DroppableColumn from "@/components/tasks/DroppableColumn";
 import FilterModal from "@/components/FilterModal";
+import RightAside from "@/components/RightAside";
 
 const initialBoard: BoardState = {
   todo: [
@@ -320,7 +321,7 @@ export default function TasksPage() {
         </div>
 
         {/* DnD context around columns */}
-        <div className="rounded-xl bg-gradient-to-b from-black/40 to-black/20 p-4">
+        <div className="rounded-xl p-4">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -331,14 +332,14 @@ export default function TasksPage() {
               setDraggingTask(null);
             }}
           >
-            <div className="flex justify-between gap-6">
+            <div className="flex justify-between flex-col md:flex-row gap-6">
               {columnOrder.map((colId) => {
                 const columnTasks = board[colId];
                 return (
                   <DroppableColumn
                     key={colId}
                     id={colId}
-                    className="w-1/3 flex flex-col"
+                    className="w-full md:w-1/3 flex flex-col"
                     // provide pointer and active drag id so the column can detect pointer hover even when nested items are droppables
                     activeDragId={activeId}
                     pointerX={pointerX}
@@ -361,7 +362,7 @@ export default function TasksPage() {
                       items={columnTasks.map((t) => t.id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      <div className="flex-1 flex flex-col gap-3 h-full">
+                      <div className="flex flex-col gap-3 h-full">
                         {columnTasks.length === 0 ? (
                           <div className="rounded-lg p-4 border border-dashed border-white/6 text-slate-400 text-sm">
                             No tasks yet — drop here or create one
@@ -392,51 +393,37 @@ export default function TasksPage() {
       </section>
 
       {/* Right panel */}
-      <aside className="max-w-1/5 w-1/5 border-l border-white/6 bg-gradient-to-b from-black/30 to-transparent flex justify-center">
-        <div className="fixed p-6">
-          <div className="flex pb-3 items-center justify-end gap-4 border-b border-slate-800">
-            {/* <div className="rounded-full bg-white/6 px-3 py-1 text-xs">
-            Workspace • Symplexia
-          </div> */}
-            <input
-              className="hidden md:inline-block rounded-2xl bg-white/4 px-3 py-2 text-sm"
-              placeholder="Search docs, tasks, agents..."
-            />
-            <div className="w-9 h-9 rounded-full bg-gradient-to-r from-pink-500 to-indigo-500 grid place-items-center">
-              Y
-            </div>
-          </div>
-          <div className="pt-3 flex items-center justify-between">
-            <h4 className="font-semibold">AI Tools</h4>
-            <div className="text-xs text-slate-400">beta</div>
-          </div>
-          <div className="mt-4 space-y-3">
-            <Button className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 font-semibold">
-              Summarize selection
+      <RightAside>
+        <div className="pt-3 flex items-center justify-between">
+          <h4 className="font-semibold">AI Tools</h4>
+          <div className="text-xs text-slate-400">beta</div>
+        </div>
+        <div className="mt-4 space-y-3">
+          <Button className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 font-semibold">
+            Summarize selection
+          </Button>
+          <Button className="w-full px-4 py-3 rounded-xl bg-white/6">
+            Draft task
+          </Button>
+          <Button className="w-full px-4 py-3 rounded-xl border border-white/6">
+            Suggest next steps
+          </Button>
+        </div>
+        <div className="mt-6">
+          <div className="text-xs text-slate-400 mb-2">Quick filters</div>
+          <div className="grid gap-2">
+            <Button variant="ghost" className="justify-start">
+              Assigned to me
             </Button>
-            <Button className="w-full px-4 py-3 rounded-xl bg-white/6">
-              Draft task
+            <Button variant="ghost" className="justify-start">
+              Due soon
             </Button>
-            <Button className="w-full px-4 py-3 rounded-xl border border-white/6">
-              Suggest next steps
+            <Button variant="ghost" className="justify-start">
+              High priority
             </Button>
-          </div>
-          <div className="mt-6">
-            <div className="text-xs text-slate-400 mb-2">Quick filters</div>
-            <div className="grid gap-2">
-              <Button variant="ghost" className="justify-start">
-                Assigned to me
-              </Button>
-              <Button variant="ghost" className="justify-start">
-                Due soon
-              </Button>
-              <Button variant="ghost" className="justify-start">
-                High priority
-              </Button>
-            </div>
           </div>
         </div>
-      </aside>
+      </RightAside>
     </>
   );
 }

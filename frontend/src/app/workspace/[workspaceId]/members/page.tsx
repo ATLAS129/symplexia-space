@@ -28,6 +28,8 @@ import {
   SelectItem,
 } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
+import RightAside from "@/components/RightAside";
+import { Toggle } from "@/components/ui/Toggle";
 
 type Role = "Owner" | "Admin" | "Editor" | "Viewer";
 
@@ -69,7 +71,7 @@ export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>(initialMembers);
 
   const [query, setQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"All" | Role>("All");
+  const [roleFilter, setRoleFilter] = useState<Role[]>([]);
 
   // invite modal
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -79,15 +81,15 @@ export default function MembersPage() {
   const [inviteError, setInviteError] = useState<string | null>(null);
 
   // CSV import modal
-  const [csvOpen, setCsvOpen] = useState(false);
-  const [csvPreview, setCsvPreview] = useState<Member[] | null>(null);
-  const fileRef = useRef<HTMLInputElement | null>(null);
+  // const [csvOpen, setCsvOpen] = useState(false);
+  // const [csvPreview, setCsvPreview] = useState<Member[] | null>(null);
+  // const fileRef = useRef<HTMLInputElement | null>(null);
 
   // search + filter
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return members.filter((m) => {
-      if (roleFilter !== "All" && m.role !== roleFilter) return false;
+      if (roleFilter.length !== 0 && !roleFilter.includes(m.role)) return false;
       if (!q) return true;
       return (
         m.name.toLowerCase().includes(q) ||
@@ -168,62 +170,62 @@ export default function MembersPage() {
   }, [inviteEmail, inviteName, inviteRole, members]);
 
   /* ---------------- CSV bulk import (client preview) ---------------- */
-  const onCsvSelect = useCallback((file?: File | null) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = String(e.target?.result ?? "");
-      const lines = text
-        .split(/\r?\n/)
-        .map((l) => l.trim())
-        .filter(Boolean);
-      // Expect CSV with header: name,email,role (role optional)
-      const parsed: Member[] = lines
-        .slice(1)
-        .map((line) => {
-          const [name = "", email = "", role = "Viewer"] = line
-            .split(",")
-            .map((c) => c.trim());
-          return {
-            id: String(Math.floor(Math.random() * 100)),
-            name,
-            email,
-            role: ["Owner", "Admin", "Editor", "Viewer"].includes(role)
-              ? (role as Role)
-              : "Viewer",
-            initials: name
-              .split(" ")
-              .map((s) => s[0])
-              .slice(0, 2)
-              .join("")
-              .toUpperCase(),
-            invited: true,
-          };
-        })
-        .filter((m) => m.email && m.name);
-      setCsvPreview(parsed.length ? parsed : null);
-      setCsvOpen(true);
-    };
-    reader.readAsText(file);
-  }, []);
+  // const onCsvSelect = useCallback((file?: File | null) => {
+  //   if (!file) return;
+  //   const reader = new FileReader();
+  //   reader.onload = (e) => {
+  //     const text = String(e.target?.result ?? "");
+  //     const lines = text
+  //       .split(/\r?\n/)
+  //       .map((l) => l.trim())
+  //       .filter(Boolean);
+  // Expect CSV with header: name,email,role (role optional)
+  // const parsed: Member[] = lines
+  //   .slice(1)
+  //   .map((line) => {
+  //     const [name = "", email = "", role = "Viewer"] = line
+  //       .split(",")
+  //       .map((c) => c.trim());
+  //     return {
+  //       id: String(Math.floor(Math.random() * 100)),
+  //       name,
+  //       email,
+  //       role: ["Owner", "Admin", "Editor", "Viewer"].includes(role)
+  //         ? (role as Role)
+  //         : "Viewer",
+  //       initials: name
+  //         .split(" ")
+  //         .map((s) => s[0])
+  //         .slice(0, 2)
+  //         .join("")
+  //         .toUpperCase(),
+  //       invited: true,
+  //     };
+  //   })
+  //   .filter((m) => m.email && m.name);
+  // setCsvPreview(parsed.length ? parsed : null);
+  // setCsvOpen(true);
+  //   };
+  //   reader.readAsText(file);
+  // }, []);
 
-  const applyCsvImport = useCallback(() => {
-    if (!csvPreview || csvPreview.length === 0) return;
-    // dedupe by email
-    const existing = new Set(members.map((m) => m.email.toLowerCase()));
-    const toAdd = csvPreview.filter(
-      (c) => !existing.has(c.email.toLowerCase())
-    );
-    if (toAdd.length === 0) {
-      alert("No new members found in the CSV (duplicates skipped).");
-    } else {
-      setMembers((prev) => [...toAdd, ...prev]);
-      alert(`Imported ${toAdd.length} members (duplicates skipped).`);
-    }
-    setCsvPreview(null);
-    setCsvOpen(false);
-    if (fileRef.current) fileRef.current.value = "";
-  }, [csvPreview, members]);
+  // const applyCsvImport = useCallback(() => {
+  //   if (!csvPreview || csvPreview.length === 0) return;
+  //   // dedupe by email
+  //   const existing = new Set(members.map((m) => m.email.toLowerCase()));
+  //   const toAdd = csvPreview.filter(
+  //     (c) => !existing.has(c.email.toLowerCase())
+  //   );
+  //   if (toAdd.length === 0) {
+  //     alert("No new members found in the CSV (duplicates skipped).");
+  //   } else {
+  //     setMembers((prev) => [...toAdd, ...prev]);
+  //     alert(`Imported ${toAdd.length} members (duplicates skipped).`);
+  //   }
+  //   setCsvPreview(null);
+  //   setCsvOpen(false);
+  //   if (fileRef.current) fileRef.current.value = "";
+  // }, [csvPreview, members]);
 
   /* ---------------- small UI helpers ---------------- */
   const countByRole = useMemo(() => {
@@ -241,10 +243,10 @@ export default function MembersPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-black to-slate-900 text-slate-100 p-8">
-        <div className="max-w-6xl mx-auto">
+      <section className="flex-1 p-6">
+        <div>
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
             <div>
               <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
                 Members
@@ -256,17 +258,19 @@ export default function MembersPage() {
                 <div className="text-xs text-slate-400">Total</div>
                 <div className="flex items-center gap-2">
                   <div className="text-sm font-medium">{countByRole.total}</div>
-                  <div className="text-xs text-red-300">
-                    Owner {countByRole.owner}
-                  </div>
-                  <div className="text-xs text-amber-300">
-                    Admin {countByRole.admin}
-                  </div>
-                  <div className="text-xs text-emerald-300">
-                    Editor {countByRole.editor}
-                  </div>
-                  <div className="text-xs text-slate-400">
-                    Viewer {countByRole.viewer}
+                  <div className="flex gap-2 text-xs">
+                    <div className=" text-red-300">
+                      Owner {countByRole.owner}
+                    </div>
+                    <div className="text-amber-300">
+                      Admin {countByRole.admin}
+                    </div>
+                    <div className="text-emerald-300">
+                      Editor {countByRole.editor}
+                    </div>
+                    <div className="text-slate-400">
+                      Viewer {countByRole.viewer}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -281,22 +285,6 @@ export default function MembersPage() {
                   className="w-72 bg-white/3 placeholder:text-slate-400"
                 />
               </div>
-
-              <Select
-                onValueChange={(v) => setRoleFilter(v as any)}
-                defaultValue="All"
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue>{roleFilter}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All roles</SelectItem>
-                  <SelectItem value="Owner">Owner</SelectItem>
-                  <SelectItem value="Admin">Admin</SelectItem>/
-                  <SelectItem value="Editor">Editor</SelectItem>
-                  <SelectItem value="Viewer">Viewer</SelectItem>
-                </SelectContent>
-              </Select>
 
               <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
                 <DialogTrigger asChild>
@@ -365,19 +353,19 @@ export default function MembersPage() {
               <div>
                 <label className="inline-flex items-center gap-2 cursor-pointer">
                   <input
-                    ref={fileRef as any}
+                    // ref={fileRef as any}
                     type="file"
                     accept=".csv"
                     className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0] ?? null;
-                      onCsvSelect(f || undefined);
-                    }}
+                    // onChange={(e) => {
+                    //   const f = e.target.files?.[0] ?? null;
+                    //   onCsvSelect(f || undefined);
+                    // }}
                   />
                   <Button
-                    onClick={() =>
-                      (fileRef.current as HTMLInputElement | null)?.click()
-                    }
+                    // onClick={() =>
+                    //   (fileRef.current as HTMLInputElement | null)?.click()
+                    // }
                     variant="outline"
                   >
                     Import CSV
@@ -388,127 +376,115 @@ export default function MembersPage() {
           </div>
 
           {/* Main content area: two-column responsive layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
             {/* Center: member cards */}
-            <section className="lg:col-span-2">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {filtered.length === 0 ? (
-                  <div className="rounded-2xl bg-white/3 p-8 text-center text-slate-400">
-                    No members found. Invite someone to get started.
+            {filtered.length === 0 ? (
+              <div className="rounded-2xl bg-white/3 p-8 text-center text-slate-400">
+                No members found. Invite someone to get started.
+              </div>
+            ) : (
+              filtered.map((m) => (
+                <article
+                  key={m.id}
+                  className="rounded-2xl bg-gradient-to-b from-black/50 to-black/30 border border-white/6 p-4 transition hover:scale-[1.01]"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-12 h-12" />
+                      <div>
+                        <div className="font-semibold text-lg">{m.name}</div>
+                        <div className="text-xs text-slate-400">{m.email}</div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-2">
+                      <Badge
+                        className={`${
+                          m.role === "Owner"
+                            ? "bg-red-500 text-white"
+                            : m.role === "Admin"
+                            ? "bg-green-500 text-white"
+                            : m.role === "Editor"
+                            ? "bg-blue-500 text-white"
+                            : "bg-gray-200 text-gray-800"
+                        }`}
+                      >
+                        {m.role}
+                      </Badge>
+                      <div className="text-xs text-slate-400">ID: {m.id}</div>
+                    </div>
                   </div>
-                ) : (
-                  filtered.map((m) => (
-                    <article
-                      key={m.id}
-                      className="rounded-2xl bg-gradient-to-b from-black/50 to-black/30 border border-white/6 p-4 shadow-lg flex flex-col transition hover:scale-[1.01]"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-12 h-12" />
-                          <div>
-                            <div className="font-semibold text-lg">
-                              {m.name}
-                            </div>
-                            <div className="text-xs text-slate-400">
-                              {m.email}
-                            </div>
-                          </div>
+
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Select
+                        onValueChange={(v) => changeRole(m.id, v as Role)}
+                        defaultValue={m.role}
+                      >
+                        <SelectTrigger className="text-sm">
+                          <SelectValue>{m.role}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Owner">Owner</SelectItem>
+                          <SelectItem value="Admin">Admin</SelectItem>
+                          <SelectItem value="Editor">Editor</SelectItem>
+                          <SelectItem value="Viewer">Viewer</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      {m.invited ? (
+                        <div className="px-2 py-1 rounded-md text-xs text-amber-300 bg-amber-900/10">
+                          Invited
                         </div>
+                      ) : null}
+                    </div>
 
-                        <div className="flex flex-col items-end gap-2">
-                          <Badge
-                            className={`${
-                              m.role === "Owner"
-                                ? "bg-red-500 text-white"
-                                : m.role === "Admin"
-                                ? "bg-green-500 text-white"
-                                : m.role === "Editor"
-                                ? "bg-blue-500 text-white"
-                                : "bg-gray-200 text-gray-800"
-                            }`}
-                          >
-                            {m.role}
-                          </Badge>
-                          <div className="text-xs text-slate-400">
-                            ID: {m.id}
-                          </div>
+                    <div className="flex items-center gap-2">
+                      {m.role !== "Owner" ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => promoteToOwner(m.id)}
+                        >
+                          Make owner
+                        </Button>
+                      ) : (
+                        <div className="text-xs text-slate-400">
+                          Workspace owner
                         </div>
-                      </div>
+                      )}
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => removeMember(m.id)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
 
-                      <div className="mt-3 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                          <Select
-                            onValueChange={(v) => changeRole(m.id, v as Role)}
-                            defaultValue={m.role}
-                          >
-                            <SelectTrigger className="w-36 text-sm">
-                              <SelectValue>{m.role}</SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Owner">Owner</SelectItem>
-                              <SelectItem value="Admin">Admin</SelectItem>
-                              <SelectItem value="Editor">Editor</SelectItem>
-                              <SelectItem value="Viewer">Viewer</SelectItem>
-                            </SelectContent>
-                          </Select>
-
-                          {m.invited ? (
-                            <div className="px-2 py-1 rounded-md text-xs text-amber-300 bg-amber-900/10">
-                              Invited
-                            </div>
-                          ) : null}
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {m.role !== "Owner" ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => promoteToOwner(m.id)}
-                            >
-                              Make owner
-                            </Button>
-                          ) : (
-                            <div className="text-xs text-slate-400">
-                              Workspace owner
-                            </div>
-                          )}
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => removeMember(m.id)}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                    </article>
-                  ))
-                )}
-              </div>
-
-              {/* Footer / helpers */}
-              <div className="mt-6 rounded-2xl bg-white/3 p-4 border border-white/6 flex items-center justify-between">
-                <div className="text-sm text-slate-400">
-                  Need enterprise features? Add SSO, role templating, or audit
-                  logs.
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    onClick={() => alert("Open role audit (stub)")}
-                  >
-                    Role audit
-                  </Button>
-                  <Button onClick={() => alert("Export CSV (stub)")}>
-                    Export CSV
-                  </Button>
-                </div>
-              </div>
-            </section>
+          {/* Footer / helpers */}
+          <div className="mt-6 rounded-2xl bg-white/3 p-4 border border-white/6 flex items-center justify-between">
+            <div className="text-sm text-slate-400">
+              Need enterprise features? Add SSO, role templating, or audit logs.
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => alert("Open role audit (stub)")}
+              >
+                Role audit
+              </Button>
+              <Button onClick={() => alert("Export CSV (stub)")}>
+                Export CSV
+              </Button>
+            </div>
           </div>
         </div>
-
         {/* CSV preview dialog (simple) */}
         {/* <Dialog open={csvOpen} onOpenChange={setCsvOpen}>
         <DialogContent className="max-w-xl">
@@ -552,70 +528,126 @@ export default function MembersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog> */}
-      </div>
+      </section>
 
       {/* Right sidebar */}
-      <aside className="max-w-1/5 w-1/5 border-l border-white/6 bg-gradient-to-b p-4 from-black/60 to-transparent flex justify-center">
-        <div className="fixed">
+      <RightAside>
+        <div className="pt-3 flex items-center justify-between">
           <div className="font-semibold">Filters & quick actions</div>
-          <div className="mt-3 text-sm text-slate-400 space-y-3">
-            <div>
-              <div className="text-xs text-slate-400 mb-1">Role</div>
-              <div className="flex gap-2">
-                <Button
-                  variant={roleFilter === "All" ? "default" : "ghost"}
-                  onClick={() => setRoleFilter("All")}
-                >
-                  All
-                </Button>
-                <Button
-                  variant={roleFilter === "Owner" ? "default" : "ghost"}
-                  onClick={() => setRoleFilter("Owner")}
-                >
-                  Owner
-                </Button>
-                <Button
-                  variant={roleFilter === "Admin" ? "default" : "ghost"}
-                  onClick={() => setRoleFilter("Admin")}
-                >
-                  Admin
-                </Button>
-                <Button
-                  variant={roleFilter === "Editor" ? "default" : "ghost"}
-                  onClick={() => setRoleFilter("Editor")}
-                >
-                  Editor
-                </Button>
-                <Button
-                  variant={roleFilter === "Viewer" ? "default" : "ghost"}
-                  onClick={() => setRoleFilter("Viewer")}
-                >
-                  Viewer
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <div className="text-xs text-slate-400 mb-1">Quick actions</div>
-            </div>
-
-            <div>
-              <div className="text-xs text-slate-400 mb-1">Role guide</div>
-              <ul className="text-sm text-slate-300 space-y-1">
-                <li>
-                  <strong>Owner</strong> — full access & billing
-                </li>
-                <li>
-                  <strong>Editor</strong> — create/edit content
-                </li>
-                <li>
-                  <strong>Viewer</strong> — read-only
-                </li>
-              </ul>
-            </div>
-          </div>
+          <div className="text-slate-400 text-xs">Filter by role</div>
         </div>
-      </aside>
+        {/* <div className="pt-3 flex items-center justify-between">
+          <div className="font-semibold">Filters & quick actions</div>
+          <div className="text-slate-400 text-xs">Filter by role</div>
+        </div> */}
+
+        <div className="mt-4">
+          <Button onClick={() => setRoleFilter([])}>All</Button>
+          {/* <Button
+            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
+            variant={roleFilter === "All" ? "default" : "ghost"}
+            onClick={() => setRoleFilter("All")}
+          >
+            All
+          </Button> */}
+          <Button
+            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
+            variant={roleFilter.includes("Owner") ? "default" : "ghost"}
+            onClick={() =>
+              roleFilter.includes("Owner")
+                ? setRoleFilter(roleFilter.filter((r) => r !== "Owner"))
+                : setRoleFilter([...roleFilter, "Owner"])
+            }
+          >
+            Owner
+          </Button>
+          <Button
+            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
+            variant={roleFilter.includes("Admin") ? "default" : "ghost"}
+            onClick={() =>
+              roleFilter.includes("Admin")
+                ? setRoleFilter(roleFilter.filter((r) => r !== "Admin"))
+                : setRoleFilter([...roleFilter, "Admin"])
+            }
+          >
+            Admin
+          </Button>
+          <Button
+            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
+            variant={roleFilter.includes("Editor") ? "default" : "ghost"}
+            onClick={() =>
+              roleFilter.includes("Editor")
+                ? setRoleFilter(
+                    roleFilter.filter((r) => r !== "Editor") as Role[]
+                  )
+                : setRoleFilter([...roleFilter, "Editor"])
+            }
+          >
+            Editor
+          </Button>
+          <Button
+            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
+            variant={roleFilter.includes("Viewer") ? "default" : "ghost"}
+            onClick={() =>
+              roleFilter.includes("Viewer")
+                ? setRoleFilter(roleFilter.filter((r) => r !== "Viewer"))
+                : setRoleFilter([...roleFilter, "Viewer"])
+            }
+          >
+            Viewer
+          </Button>
+        </div>
+        {/* <div className="mt-4 space-y-3 flex gap-2 px-2">
+          <Button
+            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
+            variant={roleFilter === "All" ? "default" : "ghost"}
+            onClick={() => setRoleFilter("All")}
+          >
+            All
+          </Button>
+          <Button
+            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
+            variant={roleFilter === "Owner" ? "default" : "ghost"}
+            onClick={() => setRoleFilter("Owner")}
+          >
+            Owner
+          </Button>
+          <Button
+            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
+            variant={roleFilter === "Admin" ? "default" : "ghost"}
+            onClick={() => setRoleFilter("Admin")}
+          >
+            Admin
+          </Button>
+          <Button
+            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
+            variant={roleFilter === "Editor" ? "default" : "ghost"}
+            onClick={() => setRoleFilter("Editor")}
+          >
+            Editor
+          </Button>
+          <Button
+            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
+            variant={roleFilter === "Viewer" ? "default" : "ghost"}
+            onClick={() => setRoleFilter("Viewer")}
+          >
+            Viewer
+          </Button>
+        </div> */}
+
+        {/* <div>
+          <div className="text-xs text-slate-400 mb-1">Quick actions</div>
+        </div> */}
+
+        {/* <div>
+          <div className="text-xs text-slate-400 mb-1">Role guide</div>
+          <div className="mt-6 text-xs text-slate-400">
+            <div>• Daily summary (scheduled)</div>
+            <div>• Auto-extract todos</div>
+            <div>• Export audit logs</div>
+          </div>
+        </div> */}
+      </RightAside>
     </>
   );
 }

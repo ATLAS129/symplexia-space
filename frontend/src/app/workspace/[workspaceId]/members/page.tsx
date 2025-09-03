@@ -468,7 +468,7 @@ export default function MembersPage() {
           </div>
 
           {/* Footer / helpers */}
-          <div className="mt-6 rounded-2xl bg-white/3 p-4 border border-white/6 flex items-center justify-between">
+          {/* <div className="mt-6 rounded-2xl bg-white/3 p-4 border border-white/6 flex items-center justify-between">
             <div className="text-sm text-slate-400">
               Need enterprise features? Add SSO, role templating, or audit logs.
             </div>
@@ -483,7 +483,7 @@ export default function MembersPage() {
                 Export CSV
               </Button>
             </div>
-          </div>
+          </div> */}
         </div>
         {/* CSV preview dialog (simple) */}
         {/* <Dialog open={csvOpen} onOpenChange={setCsvOpen}>
@@ -542,7 +542,16 @@ export default function MembersPage() {
         </div> */}
 
         <div className="mt-4">
-          <Button onClick={() => setRoleFilter([])}>All</Button>
+          <Button
+            className={`w-1/5 px-4 py-3 rounded-xl bg-white/6 ${
+              roleFilter.length === 0
+                ? "bg-gradient-to-r from-indigo-500 to-pink-500"
+                : ""
+            }`}
+            onClick={() => setRoleFilter([])}
+          >
+            All
+          </Button>
           {/* <Button
             className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
             variant={roleFilter === "All" ? "default" : "ghost"}
@@ -551,8 +560,12 @@ export default function MembersPage() {
             All
           </Button> */}
           <Button
-            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
-            variant={roleFilter.includes("Owner") ? "default" : "ghost"}
+            className={`w-1/5 px-4 py-3 rounded-xl bg-white/6 ${
+              roleFilter.includes("Owner")
+                ? "bg-gradient-to-r from-indigo-500 to-pink-500"
+                : ""
+            }`}
+            // variant={roleFilter.includes("Owner") ? "default" : "ghost"}
             onClick={() =>
               roleFilter.includes("Owner")
                 ? setRoleFilter(roleFilter.filter((r) => r !== "Owner"))
@@ -562,8 +575,12 @@ export default function MembersPage() {
             Owner
           </Button>
           <Button
-            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
-            variant={roleFilter.includes("Admin") ? "default" : "ghost"}
+            className={`w-1/5 px-4 py-3 rounded-xl bg-white/6 ${
+              roleFilter.includes("Admin")
+                ? "bg-gradient-to-r from-indigo-500 to-pink-500"
+                : ""
+            }`}
+            // variant={roleFilter.includes("Admin") ? "default" : "ghost"}
             onClick={() =>
               roleFilter.includes("Admin")
                 ? setRoleFilter(roleFilter.filter((r) => r !== "Admin"))
@@ -573,8 +590,12 @@ export default function MembersPage() {
             Admin
           </Button>
           <Button
-            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
-            variant={roleFilter.includes("Editor") ? "default" : "ghost"}
+            className={`w-1/5 px-4 py-3 rounded-xl bg-white/6 ${
+              roleFilter.includes("Editor")
+                ? "bg-gradient-to-r from-indigo-500 to-pink-500"
+                : ""
+            }`}
+            // variant={roleFilter.includes("Editor") ? "default" : "ghost"}
             onClick={() =>
               roleFilter.includes("Editor")
                 ? setRoleFilter(
@@ -586,8 +607,12 @@ export default function MembersPage() {
             Editor
           </Button>
           <Button
-            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
-            variant={roleFilter.includes("Viewer") ? "default" : "ghost"}
+            className={`w-1/5 px-4 py-3 rounded-xl bg-white/6 ${
+              roleFilter.includes("Viewer")
+                ? "bg-gradient-to-r from-indigo-500 to-pink-500"
+                : ""
+            }`}
+            // variant={roleFilter.includes("Viewer") ? "default" : "ghost"}
             onClick={() =>
               roleFilter.includes("Viewer")
                 ? setRoleFilter(roleFilter.filter((r) => r !== "Viewer"))

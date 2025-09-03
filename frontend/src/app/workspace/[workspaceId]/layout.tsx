@@ -26,6 +26,7 @@ export default async function layout({
 
   return (
     <div className="min-h-screen flex">
+      {/* Mobile menu */}
       <div className="lg:hidden p-3">
         <Sheet>
           <SheetTrigger asChild>
@@ -97,58 +98,39 @@ export default async function layout({
         </Sheet>
       </div>
 
-      <aside className="hidden lg:block w-1/6 p-5 border-r border-white/6 bg-gradient-to-b from-black/60 to-transparent">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-indigo-500 to-pink-500 grid place-items-center font-bold"></div>
-          <div>
-            <div className="font-semibold">Test Team</div>
-            <div className="text-xs text-slate-400">Workspace</div>
+      {/* Desktop menu */}
+
+      <aside className="hidden lg:block w-1/6 border-r p-5 border-white/6 bg-gradient-to-b from-black/60 to-transparent justify-center">
+        <div className="fixed top-5 left-5 w-[calc(100vw/6-2.5rem)] max-w-full">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-indigo-500 to-pink-500 grid place-items-center font-bold"></div>
+            <div>
+              <div className="font-semibold">Test Team</div>
+              <div className="text-xs text-slate-400">Workspace</div>
+            </div>
           </div>
-        </div>
 
-        <nav className="mt-8 space-y-2">
-          {Array(4)
-            .fill(null)
-            .map((el, i) => (
-              <NavItem
-                key={sideBars[i]}
-                label={sideBars[i]}
-                workspaceId={workspaceId}
-                // onClick={() =>
-                //   redirect(
-                //     `http://localhost:3000/workspace/${workspaceId}/${
-                //       i !== 0 ? sideBars[i].toLowerCase() : ""
-                //     }`
-                //   )
-                // }
-                // active={
-                //   pathName
-                //     .slice(1)
-                //     .replace(`workspace/${workspaceId}`, "") ===
-                //   sideBars[i].toLowerCase()
-                // }
-              />
-            ))}
-          {/* <NavItem
-              label="Documents"
-              onClick={() => redirect("http://localhost:3000/workspace/")}
-            />
-            <NavItem
-              label="Tasks"
-              onClick={() => redirect("http://localhost:3000/workspace/tasks")}
-            />
-            <NavItem label="Members" />
-            <NavItem label="Settings" /> */}
-        </nav>
-        <div className="mt-8">
-          <div className="text-xs text-slate-400">Members online</div>
-          <div className="mt-3 flex -space-x-3">
-            <Avatar />
-            <Avatar />
+          <nav className="mt-8 space-y-2">
+            {Array(4)
+              .fill(null)
+              .map((el, i) => (
+                <NavItem
+                  key={sideBars[i]}
+                  label={sideBars[i]}
+                  workspaceId={workspaceId}
+                />
+              ))}
+          </nav>
+          <div className="mt-8">
+            <div className="text-xs text-slate-400">Members online</div>
+            <div className="mt-3 flex -space-x-3">
+              <Avatar />
+              <Avatar />
 
-            <Avatar />
-            <div className="w-8 h-8 rounded-full grid place-items-center bg-white/6 text-xs">
-              +3
+              <Avatar />
+              <div className="w-8 h-8 rounded-full grid place-items-center bg-white/6 text-xs">
+                +3
+              </div>
             </div>
           </div>
         </div>

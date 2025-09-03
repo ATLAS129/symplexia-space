@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -10,12 +10,15 @@ import {
   DragEndEvent,
   DragStartEvent,
   DragOverlay,
-  defaultDropAnimationSideEffects,
+  closestCorners,
+  rectIntersection,
+  pointerWithin,
 } from "@dnd-kit/core";
 import {
   SortableContext,
   arrayMove,
   verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 
 import { Button } from "@/components/ui/Button";
@@ -81,13 +84,28 @@ const initialBoard: BoardState = {
   ],
 };
 
+const COLUMN_ORDER: Columns[] = ["todo", "inprogress", "done"];
+
 export default function TasksPage() {
-  const [board, setBoard] = useState<BoardState>(initialBoard);
+  // lazy init from localStorage
+  const [board, setBoard] = useState<BoardState>(() => {
+    try {
+      const raw = localStorage.getItem("board");
+      return raw ? JSON.parse(raw) : initialBoard;
+    } catch (e) {
+      return initialBoard;
+    }
+  });
+
+  // keep track of the last saved board so "Discard" works reliably
+  const lastSavedRef = useRef<BoardState>(board);
+
+  const [isDirty, setIsDirty] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draggingTask, setDraggingTask] = useState<Task | null>(null);
-  // last known pointer Y while dragging (used to decide insert before/after)
-  const [pointerX, setPointerX] = useState<number | null>(null);
-  const [pointerY, setPointerY] = useState<number | null>(null);
+
+  // track pointer Y while dragging to decide insert before/after
+  const pointerYRef = useRef<number | null>(null);
 
   // new task dialog state
   const [newTitle, setNewTitle] = useState("");
@@ -96,119 +114,111 @@ export default function TasksPage() {
     "Medium"
   );
 
-  // sensors: pointer + keyboard (keyboard supports accessible sorting)
+  // sensors with keyboard support for accessibility
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   // helper: find column that contains id
-  const findColumnOf = (id: string | null): Columns | null => {
-    if (!id) return null;
-    const k = (Object.keys(board) as Columns[]).find((col) =>
-      board[col].some((t) => t.id === id)
-    );
-    return (k ?? null) as Columns | null;
-  };
+  const findColumnOf = useCallback(
+    (id: string | null): Columns | null => {
+      if (!id) return null;
+      const keys = Object.keys(board) as Columns[];
+      const k = keys.find((col) => board[col].some((t) => t.id === id));
+      return (k ?? null) as Columns | null;
+    },
+    [board]
+  );
 
   const handleDragStart = (event: DragStartEvent) => {
-    const active = event?.active;
-    const activeId = active?.id as string | undefined;
-    if (!active || !activeId) return;
-    setActiveId(activeId);
-    const col = findColumnOf(activeId);
+    const active = event.active;
+    const id = active?.id as string | undefined;
+    if (!id) return;
+    setActiveId(id);
+    const col = findColumnOf(id);
     if (col) {
-      const t = board[col].find((x) => x.id === activeId) ?? null;
-      setDraggingTask(t);
+      setDraggingTask(board[col].find((t) => t.id === id) ?? null);
     }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    try {
-      const active = event?.active;
-      const over = event?.over;
-      const activeId = active?.id as string | undefined;
-      const overId = over?.id as string | undefined;
+    const active = event.active;
+    const over = event.over;
+    const activeId = active?.id as string | undefined;
+    const overId = over?.id as string | undefined;
 
-      // clear UI drag state immediately
-      setActiveId(null);
-      setDraggingTask(null);
+    // clear overlay UI state
+    setActiveId(null);
+    setDraggingTask(null);
 
-      if (!activeId || !overId) return;
+    if (!activeId || !overId) return;
 
-      const isOverColumn = (Object.keys(board) as string[]).includes(overId);
+    const isOverColumn = (Object.keys(board) as string[]).includes(overId);
 
-      const sourceCol = findColumnOf(activeId);
-      const destCol = isOverColumn ? (overId as Columns) : findColumnOf(overId);
-      if (!sourceCol || !destCol) return;
+    const sourceCol = findColumnOf(activeId);
+    const destCol = isOverColumn ? (overId as Columns) : findColumnOf(overId);
+    if (!sourceCol || !destCol) return;
 
-      const sourceIndex = board[sourceCol].findIndex((t) => t.id === activeId);
-      if (sourceIndex < 0) return;
+    const sourceIndex = board[sourceCol].findIndex((t) => t.id === activeId);
+    if (sourceIndex < 0) return;
 
-      const destIndex =
-        isOverColumn === true
-          ? board[destCol].length
-          : board[destCol].findIndex((t) => t.id === overId);
+    // determine destination index
+    let destIndex =
+      isOverColumn === true
+        ? board[destCol].length
+        : board[destCol].findIndex((t) => t.id === overId);
 
-      // same column reorder (simple case)
-      if (sourceCol === destCol) {
-        if (destIndex >= 0 && sourceIndex !== destIndex) {
-          setBoard((prev) => ({
-            ...prev,
-            [sourceCol]: arrayMove(prev[sourceCol], sourceIndex, destIndex),
-          }));
-        }
-        return;
+    // when moving across columns and dropping on an item, use pointerY to pick before/after
+    if (!isOverColumn && destIndex >= 0 && pointerYRef.current != null) {
+      const overEl = document.querySelector(
+        `[data-task-id="${overId}"]`
+      ) as HTMLElement | null;
+      if (overEl) {
+        const rect = overEl.getBoundingClientRect();
+        if (pointerYRef.current > rect.top + rect.height / 2)
+          destIndex = destIndex + 1;
       }
-
-      // cross-column move: decide whether to insert before or after the over-task
-      let insertAt = destIndex >= 0 ? destIndex : board[destCol].length;
-
-      if (!isOverColumn && destIndex >= 0 && pointerY != null) {
-        // try to find the target DOM element for overId
-        const overEl = document.querySelector(
-          `[data-task-id="${overId}"]`
-        ) as HTMLElement | null;
-        if (overEl) {
-          const rect = overEl.getBoundingClientRect();
-          // if pointer is below the vertical midpoint of the target element, insert after
-          if (pointerY > rect.top + rect.height / 2) {
-            insertAt = destIndex + 1;
-          } else {
-            insertAt = destIndex;
-          }
-        }
-      }
-
-      const taskToMove = board[sourceCol][sourceIndex];
-      if (!taskToMove) return;
-
-      setBoard((prev) => {
-        const newSource = prev[sourceCol].filter((t) => t.id !== activeId);
-        const newDest = [...prev[destCol]];
-        const at = Math.min(Math.max(insertAt, 0), newDest.length);
-        newDest.splice(at, 0, taskToMove);
-        return { ...prev, [sourceCol]: newSource, [destCol]: newDest };
-      });
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error("handleDragEnd error:", err);
-    } finally {
-      // reset pointer tracking after drop
-      setPointerY(null);
     }
+
+    // same column reorder
+    if (sourceCol === destCol) {
+      if (destIndex >= 0 && sourceIndex !== destIndex) {
+        setBoard((prev) => ({
+          ...prev,
+          [sourceCol]: arrayMove(prev[sourceCol], sourceIndex, destIndex),
+        }));
+        setIsDirty(true);
+      }
+      pointerYRef.current = null;
+      return;
+    }
+
+    // cross-column move
+    const taskToMove = board[sourceCol][sourceIndex];
+    if (!taskToMove) return;
+
+    setBoard((prev) => {
+      const newSource = prev[sourceCol].filter((t) => t.id !== activeId);
+      const newDest = [...prev[destCol]];
+      const at = Math.min(Math.max(destIndex, 0), newDest.length);
+      newDest.splice(at, 0, taskToMove);
+      return { ...prev, [sourceCol]: newSource, [destCol]: newDest };
+    });
+
+    setIsDirty(true);
+    pointerYRef.current = null;
   };
 
-  // track pointer Y during drag (mouse and touch) so we can decide before/after on drop
+  // track pointer Y while dragging (mouse and touch)
   useEffect(() => {
     function onMove(e: MouseEvent | TouchEvent) {
       if (e instanceof TouchEvent) {
         const t = e.touches?.[0];
-        setPointerX(t?.clientX ?? null);
-        setPointerY(t?.clientY ?? null);
+        pointerYRef.current = t?.clientY ?? null;
       } else {
         const ev = e as MouseEvent;
-        setPointerX(ev.clientX);
-        setPointerY(ev.clientY);
+        pointerYRef.current = ev.clientY;
       }
     }
 
@@ -218,19 +228,33 @@ export default function TasksPage() {
       return () => {
         window.removeEventListener("mousemove", onMove);
         window.removeEventListener("touchmove", onMove);
-        setPointerX(null);
-        setPointerY(null);
+        pointerYRef.current = null;
       };
     }
-    // cleanup when not dragging
-    setPointerX(null);
-    setPointerY(null);
+
+    pointerYRef.current = null;
     return;
   }, [activeId]);
 
+  // save & discard helpers
+  const saveBoard = () => {
+    try {
+      localStorage.setItem("board", JSON.stringify(board));
+      lastSavedRef.current = board;
+      setIsDirty(false);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to save board", err);
+    }
+  };
+
+  const discardChanges = () => {
+    setBoard(lastSavedRef.current);
+    setIsDirty(false);
+  };
+
   const submitNewTask = () => {
     const newTask: Task = {
-      // changed: use a stable unique id
       id: Date.now().toString(),
       title: newTitle.trim() || "Untitled task",
       assignee: {
@@ -240,14 +264,14 @@ export default function TasksPage() {
       priority: newPriority,
       createdAt: new Date().toDateString().slice(0, 3),
     };
+
     setBoard((prev) => ({ ...prev, todo: [newTask, ...prev.todo] }));
-    // reset
     setNewTitle("");
     setNewAssignee("Eli");
     setNewPriority("Medium");
+    setIsDirty(true);
   };
 
-  const columnOrder = ["todo", "inprogress", "done"] as Columns[];
   return (
     <>
       {/* Main area */}
@@ -263,6 +287,21 @@ export default function TasksPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <Button
+              onClick={saveBoard}
+              className="bg-indigo-500 hover:bg-indigo-500"
+              disabled={!isDirty}
+            >
+              Save
+            </Button>
+            <Button
+              onClick={discardChanges}
+              className="bg-indigo-700 hover:bg-indigo-700"
+              disabled={!isDirty}
+            >
+              Discard Changes
+            </Button>
+
             <Dialog>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-600">
@@ -325,7 +364,7 @@ export default function TasksPage() {
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
-            onDragStart={(e) => handleDragStart(e as DragStartEvent)}
+            onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDragCancel={() => {
               setActiveId(null);
@@ -333,17 +372,15 @@ export default function TasksPage() {
             }}
           >
             <div className="flex justify-between flex-col md:flex-row gap-6">
-              {columnOrder.map((colId) => {
+              {COLUMN_ORDER.map((colId) => {
                 const columnTasks = board[colId];
                 return (
                   <DroppableColumn
                     key={colId}
                     id={colId}
                     className="w-full md:w-1/3 flex flex-col"
-                    // provide pointer and active drag id so the column can detect pointer hover even when nested items are droppables
                     activeDragId={activeId}
-                    pointerX={pointerX}
-                    pointerY={pointerY}
+                    pointerY={pointerYRef.current}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-semibold capitalize">

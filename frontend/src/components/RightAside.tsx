@@ -5,7 +5,7 @@ export default function RightAside({
 }) {
   return (
     <aside className="hidden 2xl:flex w-1/5 border-l border-white/6 bg-gradient-to-b from-black/60 to-transparent justify-center">
-      <div className="fixed p-6">
+      <div className="fixed p-6 w-1/5 h-full flex flex-col">
         <div className="flex pb-3 items-center justify-end gap-4 border-b border-slate-800">
           {/* <div className="rounded-full bg-white/6 px-3 py-1 text-xs">
             Workspace • Symplexia

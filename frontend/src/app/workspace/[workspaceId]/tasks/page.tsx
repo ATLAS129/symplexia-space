@@ -363,7 +363,7 @@ export default function TasksPage() {
         <div className="rounded-xl p-4">
           <DndContext
             sensors={sensors}
-            collisionDetection={closestCenter}
+            collisionDetection={rectIntersection}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDragCancel={() => {
@@ -431,7 +431,7 @@ export default function TasksPage() {
 
       {/* Right panel */}
       <RightAside>
-        <div className="pt-3 flex items-center justify-between">
+        {/* <div className="pt-3 flex items-center justify-between">
           <h4 className="font-semibold">AI Tools</h4>
           <div className="text-xs text-slate-400">beta</div>
         </div>
@@ -445,7 +445,7 @@ export default function TasksPage() {
           <Button className="w-full px-4 py-3 rounded-xl border border-white/6">
             Suggest next steps
           </Button>
-        </div>
+        </div> */}
         <div className="mt-6">
           <div className="text-xs text-slate-400 mb-2">Quick filters</div>
           <div className="grid gap-2">

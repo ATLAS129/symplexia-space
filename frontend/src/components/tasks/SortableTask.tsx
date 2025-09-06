@@ -11,7 +11,7 @@ export default function SortableTask({
 }: {
   task: Task;
   id: string;
-  dragging: boolean;
+  dragging?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });

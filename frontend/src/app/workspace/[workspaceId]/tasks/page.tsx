@@ -1,25 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  KeyboardSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-  DragStartEvent,
-  DragOverlay,
-  closestCorners,
-  rectIntersection,
-  pointerWithin,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  arrayMove,
-  verticalListSortingStrategy,
-  sortableKeyboardCoordinates,
-} from "@dnd-kit/sortable";
+import React, { useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -41,11 +21,10 @@ import {
   SelectItem,
 } from "@/components/ui/Select";
 import { BoardState, Columns, Task } from "@/types/types";
-import SortableTask from "@/components/tasks/SortableTask";
-import DragPreview from "@/components/tasks/DragPreview";
-import DroppableColumn from "@/components/tasks/DroppableColumn";
 import FilterModal from "@/components/FilterModal";
 import RightAside from "@/components/RightAside";
+import EditBoard from "@/components/tasks/EditBoard";
+import Board from "@/components/tasks/Board";
 
 const initialBoard: BoardState = {
   todo: [
@@ -84,10 +63,15 @@ const initialBoard: BoardState = {
   ],
 };
 
-const COLUMN_ORDER: Columns[] = ["todo", "inprogress", "done"];
+type TasksFilter =
+  | "mine"
+  | "highPriority"
+  | "mediumPriority"
+  | "lowPriority"
+  | "dueSoon"
+  | "createdToday";
 
 export default function TasksPage() {
-  // lazy init from localStorage
   const [board, setBoard] = useState<BoardState>(() => {
     try {
       const raw = localStorage.getItem("board");
@@ -97,15 +81,13 @@ export default function TasksPage() {
     }
   });
 
+  const [tasksFilter, setTasksFilter] = useState<TasksFilter[]>([]);
+
   // keep track of the last saved board so "Discard" works reliably
   const lastSavedRef = useRef<BoardState>(board);
 
+  const [isEditing, setIsEditing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [draggingTask, setDraggingTask] = useState<Task | null>(null);
-
-  // track pointer Y while dragging to decide insert before/after
-  const pointerYRef = useRef<number | null>(null);
 
   // new task dialog state
   const [newTitle, setNewTitle] = useState("");
@@ -114,127 +96,67 @@ export default function TasksPage() {
     "Medium"
   );
 
-  // sensors with keyboard support for accessibility
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
+  const filtered = useMemo(() => {
+    // no filters -> return original board unchanged
+    if (!tasksFilter || tasksFilter.length === 0) return board;
 
-  // helper: find column that contains id
-  const findColumnOf = useCallback(
-    (id: string | null): Columns | null => {
-      if (!id) return null;
-      const keys = Object.keys(board) as Columns[];
-      const k = keys.find((col) => board[col].some((t) => t.id === id));
-      return (k ?? null) as Columns | null;
-    },
-    [board]
-  );
+    const now = new Date();
+    const msInDay = 1000 * 60 * 60 * 24;
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    ).getTime();
+    const endOfToday = startOfToday + msInDay - 1;
+    // const dueSoonThreshold = now.getTime() + dueSoonDays * msInDay;
 
-  const handleDragStart = (event: DragStartEvent) => {
-    const active = event.active;
-    const id = active?.id as string | undefined;
-    if (!id) return;
-    setActiveId(id);
-    const col = findColumnOf(id);
-    if (col) {
-      setDraggingTask(board[col].find((t) => t.id === id) ?? null);
-    }
-  };
+    const matches = (task: Task): boolean => {
+      // if any filter matches -> include the task (OR logic)
+      return tasksFilter.some((filter) => {
+        switch (filter) {
+          // case "mine":
+          //   return !!task.assignee && task.assignee.name === currentUser;
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const active = event.active;
-    const over = event.over;
-    const activeId = active?.id as string | undefined;
-    const overId = over?.id as string | undefined;
+          case "highPriority":
+            return task.priority === "High";
 
-    // clear overlay UI state
-    setActiveId(null);
-    setDraggingTask(null);
+          case "mediumPriority":
+            return task.priority === "Medium";
 
-    if (!activeId || !overId) return;
+          case "lowPriority":
+            return task.priority === "Low";
 
-    const isOverColumn = (Object.keys(board) as string[]).includes(overId);
+          case "dueSoon": {
+            if (!task.createdAt) return false;
+            const t = new Date(task.createdAt).getTime();
+            // dueSoon means timestamp is between now and dueSoonThreshold
+            // return t >= now.getTime() && t <= dueSoonThreshold;
+          }
 
-    const sourceCol = findColumnOf(activeId);
-    const destCol = isOverColumn ? (overId as Columns) : findColumnOf(overId);
-    if (!sourceCol || !destCol) return;
+          case "createdToday": {
+            if (!task.createdAt) return false;
+            const t = new Date(task.createdAt).getTime();
+            return t >= startOfToday && t <= endOfToday;
+          }
 
-    const sourceIndex = board[sourceCol].findIndex((t) => t.id === activeId);
-    if (sourceIndex < 0) return;
+          default:
+            return false;
+        }
+      });
+    };
 
-    // determine destination index
-    let destIndex =
-      isOverColumn === true
-        ? board[destCol].length
-        : board[destCol].findIndex((t) => t.id === overId);
+    const filteredBoard: BoardState = {
+      todo: [],
+      inprogress: [],
+      done: [],
+    };
 
-    // when moving across columns and dropping on an item, use pointerY to pick before/after
-    if (!isOverColumn && destIndex >= 0 && pointerYRef.current != null) {
-      const overEl = document.querySelector(
-        `[data-task-id="${overId}"]`
-      ) as HTMLElement | null;
-      if (overEl) {
-        const rect = overEl.getBoundingClientRect();
-        if (pointerYRef.current > rect.top + rect.height / 2)
-          destIndex = destIndex + 1;
-      }
-    }
-
-    // same column reorder
-    if (sourceCol === destCol) {
-      if (destIndex >= 0 && sourceIndex !== destIndex) {
-        setBoard((prev) => ({
-          ...prev,
-          [sourceCol]: arrayMove(prev[sourceCol], sourceIndex, destIndex),
-        }));
-        setIsDirty(true);
-      }
-      pointerYRef.current = null;
-      return;
-    }
-
-    // cross-column move
-    const taskToMove = board[sourceCol][sourceIndex];
-    if (!taskToMove) return;
-
-    setBoard((prev) => {
-      const newSource = prev[sourceCol].filter((t) => t.id !== activeId);
-      const newDest = [...prev[destCol]];
-      const at = Math.min(Math.max(destIndex, 0), newDest.length);
-      newDest.splice(at, 0, taskToMove);
-      return { ...prev, [sourceCol]: newSource, [destCol]: newDest };
+    (Object.keys(board) as Columns[]).forEach((col) => {
+      filteredBoard[col] = board[col].filter(matches);
     });
 
-    setIsDirty(true);
-    pointerYRef.current = null;
-  };
-
-  // track pointer Y while dragging (mouse and touch)
-  useEffect(() => {
-    function onMove(e: MouseEvent | TouchEvent) {
-      if (e instanceof TouchEvent) {
-        const t = e.touches?.[0];
-        pointerYRef.current = t?.clientY ?? null;
-      } else {
-        const ev = e as MouseEvent;
-        pointerYRef.current = ev.clientY;
-      }
-    }
-
-    if (activeId) {
-      window.addEventListener("mousemove", onMove);
-      window.addEventListener("touchmove", onMove, { passive: true });
-      return () => {
-        window.removeEventListener("mousemove", onMove);
-        window.removeEventListener("touchmove", onMove);
-        pointerYRef.current = null;
-      };
-    }
-
-    pointerYRef.current = null;
-    return;
-  }, [activeId]);
+    return filteredBoard;
+  }, [board, tasksFilter]);
 
   // save & discard helpers
   const saveBoard = () => {
@@ -242,6 +164,7 @@ export default function TasksPage() {
       localStorage.setItem("board", JSON.stringify(board));
       lastSavedRef.current = board;
       setIsDirty(false);
+      setIsEditing(false);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error("Failed to save board", err);
@@ -251,6 +174,7 @@ export default function TasksPage() {
   const discardChanges = () => {
     setBoard(lastSavedRef.current);
     setIsDirty(false);
+    setIsEditing(false);
   };
 
   const submitNewTask = () => {
@@ -286,147 +210,99 @@ export default function TasksPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={saveBoard}
-              className="bg-indigo-500 hover:bg-indigo-500"
-              disabled={!isDirty}
-            >
-              Save
-            </Button>
-            <Button
-              onClick={discardChanges}
-              className="bg-indigo-700 hover:bg-indigo-700"
-              disabled={!isDirty}
-            >
-              Discard Changes
-            </Button>
+          {isEditing ? (
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={saveBoard}
+                className="bg-indigo-500 hover:bg-indigo-500"
+                disabled={!isDirty}
+              >
+                Save
+              </Button>
+              <Button
+                onClick={discardChanges}
+                className="bg-indigo-700 hover:bg-indigo-700"
+              >
+                Discard Changes
+              </Button>
 
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-600">
-                  + New Task
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Create task</DialogTitle>
-                  <DialogDescription>
-                    Quickly add a task to the board.
-                  </DialogDescription>
-                </DialogHeader>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-600">
+                    + New Task
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Create task</DialogTitle>
+                    <DialogDescription>
+                      Quickly add a task to the board.
+                    </DialogDescription>
+                  </DialogHeader>
 
-                <div className="grid gap-3 py-2">
-                  <label className="text-xs text-slate-400">Title</label>
-                  <Input
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="Fix signup flow"
-                  />
+                  <div className="grid gap-3 py-2">
+                    <label className="text-xs text-slate-400">Title</label>
+                    <Input
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      placeholder="Fix signup flow"
+                    />
 
-                  <label className="text-xs text-slate-400">Assignee</label>
-                  <Input
-                    value={newAssignee}
-                    onChange={(e) => setNewAssignee(e.target.value)}
-                    placeholder="Eli"
-                  />
+                    <label className="text-xs text-slate-400">Assignee</label>
+                    <Input
+                      value={newAssignee}
+                      onChange={(e) => setNewAssignee(e.target.value)}
+                      placeholder="Eli"
+                    />
 
-                  <label className="text-xs text-slate-400">Priority</label>
-                  <Select onValueChange={(v) => setNewPriority(v as any)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue>{newPriority}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Low">Low</SelectItem>
-                      <SelectItem value="Medium">Medium</SelectItem>
-                      <SelectItem value="High">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <label className="text-xs text-slate-400">Priority</label>
+                    <Select onValueChange={(v) => setNewPriority(v as any)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue>{newPriority}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Low">Low</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="High">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="ghost">Cancel</Button>
-                  </DialogClose>
-                  <DialogClose asChild>
-                    <Button onClick={submitNewTask}>Create task</Button>
-                  </DialogClose>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
-            <FilterModal />
-          </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button variant="ghost">Cancel</Button>
+                    </DialogClose>
+                    <DialogClose asChild>
+                      <Button onClick={submitNewTask}>Create task</Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Button
+                className="bg-indigo-500 hover:bg-indigo-500"
+                variant="ghost"
+                onClick={() => setIsEditing(true)}
+              >
+                Edit
+              </Button>
+              <FilterModal />
+            </div>
+          )}
         </div>
 
         {/* DnD context around columns */}
-        <div className="rounded-xl p-4">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={rectIntersection}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragCancel={() => {
-              setActiveId(null);
-              setDraggingTask(null);
-            }}
-          >
-            <div className="flex justify-between flex-col md:flex-row gap-6">
-              {COLUMN_ORDER.map((colId) => {
-                const columnTasks = board[colId];
-                return (
-                  <DroppableColumn
-                    key={colId}
-                    id={colId}
-                    className="w-full md:w-1/3 flex flex-col"
-                    activeDragId={activeId}
-                    pointerY={pointerYRef.current}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold capitalize">
-                        {colId === "todo"
-                          ? "To do"
-                          : colId === "inprogress"
-                          ? "In progress"
-                          : "Done"}
-                      </h3>
-                      <div className="text-xs text-slate-400">
-                        {columnTasks.length}
-                      </div>
-                    </div>
-
-                    <SortableContext
-                      items={columnTasks.map((t) => t.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <div className="flex flex-col gap-3 h-full">
-                        {columnTasks.length === 0 ? (
-                          <div className="rounded-lg p-4 border border-dashed border-white/6 text-slate-400 text-sm">
-                            No tasks yet — drop here or create one
-                          </div>
-                        ) : (
-                          columnTasks.map((task) => (
-                            <SortableTask
-                              key={task.id}
-                              id={task.id}
-                              task={task}
-                              dragging={activeId === task.id}
-                            />
-                          ))
-                        )}
-                      </div>
-                    </SortableContext>
-                  </DroppableColumn>
-                );
-              })}
-            </div>
-
-            {/* Drag overlay preview */}
-            <DragOverlay>
-              {draggingTask ? <DragPreview task={draggingTask} /> : null}
-            </DragOverlay>
-          </DndContext>
-        </div>
+        {isEditing ? (
+          <EditBoard
+            board={filtered}
+            setIsDirty={setIsDirty}
+            setBoard={setBoard}
+          />
+        ) : (
+          <Board board={filtered} />
+        )}
       </section>
 
       {/* Right panel */}
@@ -449,15 +325,84 @@ export default function TasksPage() {
         <div className="mt-6">
           <div className="text-xs text-slate-400 mb-2">Quick filters</div>
           <div className="grid gap-2">
-            <Button variant="ghost" className="justify-start">
+            {/* <Button
+              variant="ghost"
+              className="justify-start"
+              onClick={() => {
+                setTasksFilter((prev) =>
+                  prev.includes("mine")
+                    ? prev.filter((f) => f !== "mine")
+                    : [...prev, "mine"]
+                );
+              }}
+            >
               Assigned to me
             </Button>
-            <Button variant="ghost" className="justify-start">
+            <Button
+              variant="ghost"
+              className="justify-start"
+              onClick={() => {
+                setTasksFilter((prev) =>
+                  prev.includes("dueSoon")
+                    ? prev.filter((f) => f !== "dueSoon")
+                    : [...prev, "dueSoon"]
+                );
+              }}
+            >
               Due soon
-            </Button>
-            <Button variant="ghost" className="justify-start">
-              High priority
-            </Button>
+            </Button> */}
+            {!isEditing && (
+              <>
+                <Button
+                  className={`justify-start ${
+                    tasksFilter.includes("lowPriority")
+                      ? "bg-gradient-to-r from-indigo-500 to-pink-500"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    setTasksFilter((prev) =>
+                      prev.includes("lowPriority")
+                        ? prev.filter((f) => f !== "lowPriority")
+                        : [...prev, "lowPriority"]
+                    );
+                  }}
+                >
+                  Low priority
+                </Button>
+                <Button
+                  className={`justify-start ${
+                    tasksFilter.includes("mediumPriority")
+                      ? "bg-gradient-to-r from-indigo-500 to-pink-500"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    setTasksFilter((prev) =>
+                      prev.includes("mediumPriority")
+                        ? prev.filter((f) => f !== "mediumPriority")
+                        : [...prev, "mediumPriority"]
+                    );
+                  }}
+                >
+                  Medium priority
+                </Button>
+                <Button
+                  className={`justify-start ${
+                    tasksFilter.includes("highPriority")
+                      ? "bg-gradient-to-r from-indigo-500 to-pink-500"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    setTasksFilter((prev) =>
+                      prev.includes("highPriority")
+                        ? prev.filter((f) => f !== "highPriority")
+                        : [...prev, "highPriority"]
+                    );
+                  }}
+                >
+                  High priority
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </RightAside>

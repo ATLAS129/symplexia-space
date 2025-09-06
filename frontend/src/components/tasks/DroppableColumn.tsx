@@ -41,7 +41,11 @@ export default function DroppableColumn({
     localRef.current instanceof HTMLElement
   ) {
     const rect = localRef.current.getBoundingClientRect();
-    pointerInside = pointerX >= rect.left && pointerX <= rect.right;
+    pointerInside =
+      pointerX >= rect.left &&
+      pointerX <= rect.right &&
+      pointerY >= rect.top &&
+      pointerY <= rect.bottom;
   }
 
   const isActive = isOver || pointerInside;

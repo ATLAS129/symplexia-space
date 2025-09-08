@@ -6,6 +6,14 @@ export type Task = {
   createdAt?: string;
 };
 
+export type TasksFilter =
+  | "mine"
+  | "highPriority"
+  | "mediumPriority"
+  | "lowPriority"
+  | "dueSoon"
+  | "createdToday";
+
 export type Document = {
   id: number;
   title: string;

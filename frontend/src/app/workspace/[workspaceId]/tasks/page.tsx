@@ -20,11 +20,12 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/Select";
-import { BoardState, Columns, Task } from "@/types/types";
+import { BoardState, Columns, Task, TasksFilter } from "@/types/types";
 import FilterModal from "@/components/FilterModal";
 import RightAside from "@/components/RightAside";
 import EditBoard from "@/components/tasks/EditBoard";
 import Board from "@/components/tasks/Board";
+import { PenLine } from "lucide-react";
 
 const initialBoard: BoardState = {
   todo: [
@@ -62,14 +63,6 @@ const initialBoard: BoardState = {
     },
   ],
 };
-
-type TasksFilter =
-  | "mine"
-  | "highPriority"
-  | "mediumPriority"
-  | "lowPriority"
-  | "dueSoon"
-  | "createdToday";
 
 export default function TasksPage() {
   const [board, setBoard] = useState<BoardState>(() => {
@@ -196,6 +189,8 @@ export default function TasksPage() {
     setIsDirty(true);
   };
 
+  console.log("rendering with filters", tasksFilter);
+
   return (
     <>
       {/* Main area */}
@@ -282,13 +277,15 @@ export default function TasksPage() {
           ) : (
             <div className="flex items-center gap-3">
               <Button
-                className="bg-indigo-500 hover:bg-indigo-500"
-                variant="ghost"
+                className="bg-indigo-500"
                 onClick={() => setIsEditing(true)}
               >
-                Edit
+                <PenLine />
               </Button>
-              <FilterModal />
+              <FilterModal
+                tasksFilter={tasksFilter}
+                setTasksFilter={setTasksFilter}
+              />
             </div>
           )}
         </div>
@@ -296,7 +293,7 @@ export default function TasksPage() {
         {/* DnD context around columns */}
         {isEditing ? (
           <EditBoard
-            board={filtered}
+            board={board}
             setIsDirty={setIsDirty}
             setBoard={setBoard}
           />
@@ -324,8 +321,7 @@ export default function TasksPage() {
         </div> */}
         <div className="mt-6">
           <div className="text-xs text-slate-400 mb-2">Quick filters</div>
-          <div className="grid gap-2">
-            {/* <Button
+          {/* <Button
               variant="ghost"
               className="justify-start"
               onClick={() => {
@@ -351,59 +347,58 @@ export default function TasksPage() {
             >
               Due soon
             </Button> */}
-            {!isEditing && (
-              <>
-                <Button
-                  className={`justify-start ${
-                    tasksFilter.includes("lowPriority")
-                      ? "bg-gradient-to-r from-indigo-500 to-pink-500"
-                      : ""
-                  }`}
-                  onClick={() => {
-                    setTasksFilter((prev) =>
-                      prev.includes("lowPriority")
-                        ? prev.filter((f) => f !== "lowPriority")
-                        : [...prev, "lowPriority"]
-                    );
-                  }}
-                >
-                  Low priority
-                </Button>
-                <Button
-                  className={`justify-start ${
-                    tasksFilter.includes("mediumPriority")
-                      ? "bg-gradient-to-r from-indigo-500 to-pink-500"
-                      : ""
-                  }`}
-                  onClick={() => {
-                    setTasksFilter((prev) =>
-                      prev.includes("mediumPriority")
-                        ? prev.filter((f) => f !== "mediumPriority")
-                        : [...prev, "mediumPriority"]
-                    );
-                  }}
-                >
-                  Medium priority
-                </Button>
-                <Button
-                  className={`justify-start ${
-                    tasksFilter.includes("highPriority")
-                      ? "bg-gradient-to-r from-indigo-500 to-pink-500"
-                      : ""
-                  }`}
-                  onClick={() => {
-                    setTasksFilter((prev) =>
-                      prev.includes("highPriority")
-                        ? prev.filter((f) => f !== "highPriority")
-                        : [...prev, "highPriority"]
-                    );
-                  }}
-                >
-                  High priority
-                </Button>
-              </>
-            )}
-          </div>
+          {!isEditing && (
+            <div className="w-full flex justify-between items-center gap-2 [*&>button]:w-1/3">
+              <Button
+                className={`${
+                  tasksFilter.includes("lowPriority")
+                    ? "bg-gradient-to-r from-indigo-500 to-pink-500"
+                    : ""
+                }`}
+                onClick={() => {
+                  setTasksFilter((prev) =>
+                    prev.includes("lowPriority")
+                      ? prev.filter((f) => f !== "lowPriority")
+                      : [...prev, "lowPriority"]
+                  );
+                }}
+              >
+                Low priority
+              </Button>
+              <Button
+                className={`${
+                  tasksFilter.includes("mediumPriority")
+                    ? "bg-gradient-to-r from-indigo-500 to-pink-500"
+                    : ""
+                }`}
+                onClick={() => {
+                  setTasksFilter((prev) =>
+                    prev.includes("mediumPriority")
+                      ? prev.filter((f) => f !== "mediumPriority")
+                      : [...prev, "mediumPriority"]
+                  );
+                }}
+              >
+                Medium priority
+              </Button>
+              <Button
+                className={`${
+                  tasksFilter.includes("highPriority")
+                    ? "bg-gradient-to-r from-indigo-500 to-pink-500"
+                    : ""
+                }`}
+                onClick={() => {
+                  setTasksFilter((prev) =>
+                    prev.includes("highPriority")
+                      ? prev.filter((f) => f !== "highPriority")
+                      : [...prev, "highPriority"]
+                  );
+                }}
+              >
+                High priority
+              </Button>
+            </div>
+          )}
         </div>
       </RightAside>
     </>

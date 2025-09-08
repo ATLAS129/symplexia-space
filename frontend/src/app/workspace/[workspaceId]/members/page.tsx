@@ -44,25 +44,25 @@ type Member = {
 
 const initialMembers: Member[] = [
   {
-    id: "m-1",
+    id: "1",
     name: "Eli Larson",
     email: "eli@acme.com",
     role: "Owner",
     initials: "EL",
   },
   {
-    id: "m-2",
+    id: "2",
     name: "Maya Kim",
     email: "maya@acme.com",
     role: "Editor",
     initials: "MK",
   },
   {
-    id: "m-3",
-    name: "Jon Smith",
-    email: "jon@acme.com",
+    id: "3",
+    name: "Jon Doe",
+    email: "jon@Doe.com",
     role: "Viewer",
-    initials: "JS",
+    initials: "JD",
   },
 ];
 
@@ -362,14 +362,14 @@ export default function MembersPage() {
                     //   onCsvSelect(f || undefined);
                     // }}
                   />
-                  <Button
+                  {/* <Button
                     // onClick={() =>
                     //   (fileRef.current as HTMLInputElement | null)?.click()
                     // }
                     variant="outline"
                   >
                     Import CSV
-                  </Button>
+                  </Button> */}
                 </label>
               </div>
             </div>

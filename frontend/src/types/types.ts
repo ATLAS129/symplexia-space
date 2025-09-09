@@ -1,7 +1,7 @@
 export type Task = {
   id: string;
   title: string;
-  assignee?: { name: string; initials: string; color?: string };
+  assignee?: { name: string[] };
   priority?: "Low" | "Medium" | "High";
   createdAt?: string;
 };

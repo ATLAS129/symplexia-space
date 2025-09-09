@@ -11,15 +11,6 @@ import {
   DialogFooter,
 } from "./ui/Dialog";
 import { TasksFilter } from "@/types/types";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/Select";
 import { Checkbox } from "./ui/Checkbox";
 import { Label } from "./ui/Label";
 
@@ -36,8 +27,6 @@ function FilterModal({
     setLocalFilter(tasksFilter);
   }, [tasksFilter]);
 
-  console.log("tasksFilter", tasksFilter, "local", localFilter);
-
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -45,7 +34,7 @@ function FilterModal({
           Filter
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="">
         <DialogHeader>
           <DialogTitle>Filter</DialogTitle>
           <DialogDescription>
@@ -53,7 +42,7 @@ function FilterModal({
           </DialogDescription>
         </DialogHeader>
         <div>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center border-b pb-4">
             <h2>By priority</h2>
             <div className="flex items-center justify-center gap-6">
               <div className="flex items-center gap-3">
@@ -100,11 +89,14 @@ function FilterModal({
               </div>
             </div>
           </div>
+          <div className="flex justify-between items-center border-b py-4">
+            <h2>By status</h2>
+            <div className="flex items-center justify-center gap-6"></div>
+          </div>
         </div>
         <DialogFooter>
           <DialogClose asChild>
             <Button
-              variant="outline"
               onClick={() => setTasksFilter(localFilter ? localFilter : [])}
             >
               Apply

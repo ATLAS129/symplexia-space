@@ -200,7 +200,7 @@ export default function EditBoard({
   //   };
 
   return (
-    <div className="rounded-xl p-4">
+    <div className="rounded-xl">
       <DndContext
         sensors={sensors}
         collisionDetection={rectIntersection}

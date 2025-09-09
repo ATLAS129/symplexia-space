@@ -6,7 +6,7 @@ const COLUMN_ORDER: Columns[] = ["todo", "inprogress", "done"];
 
 export default function Board({ board }: { board: BoardState }) {
   return (
-    <div className="rounded-xl p-4">
+    <div className="rounded-xl">
       <div className="flex justify-between flex-col md:flex-row gap-6">
         {COLUMN_ORDER.map((colId) => {
           const columnTasks = board[colId];

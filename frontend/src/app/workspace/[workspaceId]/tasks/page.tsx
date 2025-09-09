@@ -26,20 +26,21 @@ import RightAside from "@/components/RightAside";
 import EditBoard from "@/components/tasks/EditBoard";
 import Board from "@/components/tasks/Board";
 import { PenLine } from "lucide-react";
+import RightAsideFilters from "@/components/tasks/RightAsideFilter";
 
 const initialBoard: BoardState = {
   todo: [
     {
       id: "t-1",
       title: "Design system: tokens + components",
-      assignee: { name: "Eli", initials: "EL" },
+      assignee: { name: ["Eli"] },
       priority: "High",
       createdAt: "Wed",
     },
     {
       id: "t-2",
       title: "Write onboarding copy",
-      assignee: { name: "Maya", initials: "MK" },
+      assignee: { name: ["Maya"] },
       priority: "Medium",
       createdAt: "Fri",
     },
@@ -48,7 +49,7 @@ const initialBoard: BoardState = {
     {
       id: "t-3",
       title: "Realtime sync (Yjs) POC",
-      assignee: { name: "Jon", initials: "JS" },
+      assignee: { name: ["Jon"] },
       priority: "High",
       createdAt: "Thu",
     },
@@ -57,7 +58,7 @@ const initialBoard: BoardState = {
     {
       id: "t-4",
       title: "Landing page hero",
-      assignee: { name: "Eli", initials: "EL" },
+      assignee: { name: ["Eli"] },
       priority: "Low",
       createdAt: "Yesterday",
     },
@@ -88,68 +89,205 @@ export default function TasksPage() {
   const [newPriority, setNewPriority] = useState<"Low" | "Medium" | "High">(
     "Medium"
   );
+  const [assigneeFilter, setAssigneeFilter] = useState<"everyone" | "me">(
+    "everyone"
+  );
+  const [searchQuery, setSearchQuery] = useState("");
+
+  console.log(assigneeFilter);
+  type Options = {
+    currentUser?: string; // used for 'mine' / 'assignedToMe'
+    dueSoonDays?: number; // default: 7
+  };
+  function filterAndSearchBoard(
+    board: BoardState,
+    query: string | null | undefined,
+    tasksFilter?: TasksFilter[] | null,
+    options: Options = { currentUser: "Eli" }
+  ): BoardState {
+    const q = (query ?? "").trim().toLowerCase();
+    const tokens = q ? q.split(/\s+/).filter(Boolean) : [];
+    const hasQuery = tokens.length > 0;
+
+    const filters = tasksFilter ?? [];
+    const hasFilters = filters.length > 0;
+
+    // fast path: nothing to do
+    if (!hasQuery && !hasFilters) return board;
+
+    const now = Date.now();
+    const msInDay = 1000 * 60 * 60 * 24;
+    const startOfToday = new Date(new Date(now).setHours(0, 0, 0, 0)).getTime();
+    const dueSoonDays = options.dueSoonDays ?? 7;
+    const dueSoonThreshold = now + dueSoonDays * msInDay;
+
+    const matchesSearch = (task: Task) => {
+      if (!hasQuery) return true;
+      const title = task.title ?? "";
+      const assigneeName = task.assignee?.name ?? "";
+      const priority = task.priority ?? "";
+      const createdAt = task.createdAt ?? "";
+
+      const hay =
+        `${title} ${assigneeName} ${priority} ${createdAt}`.toLowerCase();
+      return tokens.every((t) => hay.indexOf(t) !== -1);
+    };
+
+    const matchesFilterKey = (task: Task, key: TasksFilter) => {
+      switch (key) {
+        case "highPriority":
+          return task.priority === "High";
+        case "mediumPriority":
+          return task.priority === "Medium";
+        case "lowPriority":
+          return task.priority === "Low";
+        case "createdToday": {
+          if (!task.createdAt) return false;
+          const t = Date.parse(task.createdAt);
+          if (isNaN(t)) return false;
+          return t >= startOfToday && t <= startOfToday + msInDay - 1;
+        }
+        case "dueSoon": {
+          // interpret createdAt as a timestamp for due date if parsable.
+          if (!task.createdAt) return false;
+          const t = Date.parse(task.createdAt);
+          if (isNaN(t)) return false;
+          // NOTE: semantics: dueSoon = createdAt is within now..dueSoonThreshold
+          return t >= now && t <= dueSoonThreshold;
+        }
+        case "mine": {
+          const user = options.currentUser;
+          if (!user) return false;
+          return !!task.assignee && task.assignee.name.includes(user);
+        }
+        default:
+          return false;
+      }
+    };
+
+    const matchesFilters = (task: Task) => {
+      if (!hasFilters) return true;
+      // OR logic across provided filter keys
+      return filters.some((f) => matchesFilterKey(task, f));
+    };
+
+    // Build result preserving columns and order
+    const result: BoardState = {} as BoardState;
+    const cols = Object.keys(board) as Columns[];
+    for (const col of cols) {
+      result[col] = board[col].filter(
+        (task) => matchesSearch(task) && matchesFilters(task)
+      );
+    }
+
+    return result;
+  }
 
   const filtered = useMemo(() => {
-    // no filters -> return original board unchanged
-    if (!tasksFilter || tasksFilter.length === 0) return board;
-
-    const now = new Date();
-    const msInDay = 1000 * 60 * 60 * 24;
-    const startOfToday = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate()
-    ).getTime();
-    const endOfToday = startOfToday + msInDay - 1;
-    // const dueSoonThreshold = now.getTime() + dueSoonDays * msInDay;
-
-    const matches = (task: Task): boolean => {
-      // if any filter matches -> include the task (OR logic)
-      return tasksFilter.some((filter) => {
-        switch (filter) {
-          // case "mine":
-          //   return !!task.assignee && task.assignee.name === currentUser;
-
-          case "highPriority":
-            return task.priority === "High";
-
-          case "mediumPriority":
-            return task.priority === "Medium";
-
-          case "lowPriority":
-            return task.priority === "Low";
-
-          case "dueSoon": {
-            if (!task.createdAt) return false;
-            const t = new Date(task.createdAt).getTime();
-            // dueSoon means timestamp is between now and dueSoonThreshold
-            // return t >= now.getTime() && t <= dueSoonThreshold;
-          }
-
-          case "createdToday": {
-            if (!task.createdAt) return false;
-            const t = new Date(task.createdAt).getTime();
-            return t >= startOfToday && t <= endOfToday;
-          }
-
-          default:
-            return false;
-        }
-      });
-    };
-
-    const filteredBoard: BoardState = {
-      todo: [],
-      inprogress: [],
-      done: [],
-    };
-
-    (Object.keys(board) as Columns[]).forEach((col) => {
-      filteredBoard[col] = board[col].filter(matches);
+    return filterAndSearchBoard(board, searchQuery, tasksFilter, {
+      currentUser: "Eli",
+      dueSoonDays: 3,
     });
+  }, [board, searchQuery, tasksFilter]);
 
-    return filteredBoard;
-  }, [board, tasksFilter]);
+  // function filterBoard(board: BoardState, query: string): BoardState {
+  //   const q = (query ?? "").trim().toLowerCase();
+  //   if (!q) return board;
+
+  //   const tokens = q.split(/\s+/).filter(Boolean);
+  //   if (tokens.length === 0) return board;
+
+  //   const columns = Object.keys(board) as Columns[];
+
+  //   const matchesTask = (task: Task): boolean => {
+  //     // build searchable text for this task
+  //     const title = task.title ?? "";
+  //     const assigneeName = task.assignee?.name ?? "";
+  //     const initials = task.assignee?.initials ?? "";
+  //     const priority = task.priority ?? "";
+  //     const createdAt = task.createdAt ?? "";
+
+  //     const hay =
+  //       `${title} ${assigneeName} ${initials} ${priority} ${createdAt}`.toLowerCase();
+
+  //     // every token must be present
+  //     return tokens.every((t) => hay.indexOf(t) !== -1);
+  //   };
+
+  //   const result: BoardState = {} as BoardState;
+  //   for (const col of columns) {
+  //     result[col] = board[col].filter(matchesTask);
+  //   }
+
+  //   return result;
+  // }
+
+  // const filtered = useMemo(
+  //   () => filterBoard(board, searchQuery),
+  //   [board, searchQuery]
+  // );
+
+  // const filtered = useMemo(() => {
+  //   // no filters -> return original board unchanged
+  // if (!tasksFilter || tasksFilter.length === 0) return board;
+
+  // const now = new Date();
+  // const msInDay = 1000 * 60 * 60 * 24;
+  // const startOfToday = new Date(
+  //   now.getFullYear(),
+  //   now.getMonth(),
+  //   now.getDate()
+  // ).getTime();
+  // const endOfToday = startOfToday + msInDay - 1;
+  // // const dueSoonThreshold = now.getTime() + dueSoonDays * msInDay;
+
+  // const matches = (task: Task): boolean => {
+  //   // if any filter matches -> include the task (OR logic)
+  //   return tasksFilter.some((filter) => {
+  //     switch (filter) {
+  //       // case "mine":
+  //       //   return !!task.assignee && task.assignee.name === currentUser;
+
+  //       case "highPriority":
+  //         return task.priority === "High";
+
+  //       case "mediumPriority":
+  //         return task.priority === "Medium";
+
+  //       case "lowPriority":
+  //         return task.priority === "Low";
+
+  //       case "dueSoon": {
+  //         if (!task.createdAt) return false;
+  //         const t = new Date(task.createdAt).getTime();
+  //         // dueSoon means timestamp is between now and dueSoonThreshold
+  //         // return t >= now.getTime() && t <= dueSoonThreshold;
+  //       }
+
+  //       case "createdToday": {
+  //         if (!task.createdAt) return false;
+  //         const t = new Date(task.createdAt).getTime();
+  //         return t >= startOfToday && t <= endOfToday;
+  //       }
+
+  //       default:
+  //         return false;
+  //     }
+  //   });
+  // };
+
+  // const filteredBoard: BoardState = {
+  //   todo: [],
+  //   inprogress: [],
+  //   done: [],
+  // };
+
+  // (Object.keys(board) as Columns[]).forEach((col) => {
+  //   filteredBoard[col] = board[col].filter(matches);
+  // });
+
+  // return filteredBoard;
+  // }, [board, tasksFilter]);
 
   // save & discard helpers
   const saveBoard = () => {
@@ -175,8 +313,7 @@ export default function TasksPage() {
       id: Date.now().toString(),
       title: newTitle.trim() || "Untitled task",
       assignee: {
-        name: newAssignee,
-        initials: newAssignee.slice(0, 2).toUpperCase(),
+        name: [newAssignee || "Eli"],
       },
       priority: newPriority,
       createdAt: new Date().toDateString().slice(0, 3),
@@ -188,8 +325,6 @@ export default function TasksPage() {
     setNewPriority("Medium");
     setIsDirty(true);
   };
-
-  console.log("rendering with filters", tasksFilter);
 
   return (
     <>
@@ -282,10 +417,10 @@ export default function TasksPage() {
               >
                 <PenLine />
               </Button>
-              <FilterModal
+              {/* <FilterModal
                 tasksFilter={tasksFilter}
                 setTasksFilter={setTasksFilter}
-              />
+              /> */}
             </div>
           )}
         </div>
@@ -319,8 +454,7 @@ export default function TasksPage() {
             Suggest next steps
           </Button>
         </div> */}
-        <div className="mt-6">
-          <div className="text-xs text-slate-400 mb-2">Quick filters</div>
+        <div className="py-3">
           {/* <Button
               variant="ghost"
               className="justify-start"
@@ -347,57 +481,26 @@ export default function TasksPage() {
             >
               Due soon
             </Button> */}
-          {!isEditing && (
-            <div className="w-full flex justify-between items-center gap-2 [*&>button]:w-1/3">
-              <Button
-                className={`${
-                  tasksFilter.includes("lowPriority")
-                    ? "bg-gradient-to-r from-indigo-500 to-pink-500"
-                    : ""
-                }`}
-                onClick={() => {
-                  setTasksFilter((prev) =>
-                    prev.includes("lowPriority")
-                      ? prev.filter((f) => f !== "lowPriority")
-                      : [...prev, "lowPriority"]
-                  );
-                }}
-              >
-                Low priority
-              </Button>
-              <Button
-                className={`${
-                  tasksFilter.includes("mediumPriority")
-                    ? "bg-gradient-to-r from-indigo-500 to-pink-500"
-                    : ""
-                }`}
-                onClick={() => {
-                  setTasksFilter((prev) =>
-                    prev.includes("mediumPriority")
-                      ? prev.filter((f) => f !== "mediumPriority")
-                      : [...prev, "mediumPriority"]
-                  );
-                }}
-              >
-                Medium priority
-              </Button>
-              <Button
-                className={`${
-                  tasksFilter.includes("highPriority")
-                    ? "bg-gradient-to-r from-indigo-500 to-pink-500"
-                    : ""
-                }`}
-                onClick={() => {
-                  setTasksFilter((prev) =>
-                    prev.includes("highPriority")
-                      ? prev.filter((f) => f !== "highPriority")
-                      : [...prev, "highPriority"]
-                  );
-                }}
-              >
-                High priority
-              </Button>
-            </div>
+          {!isEditing ? (
+            <RightAsideFilters
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              tasksFilter={tasksFilter}
+              assigneeFilter={assigneeFilter}
+              onAssigneeChange={setAssigneeFilter}
+              onTogglePriority={(p) =>
+                setTasksFilter((prev) =>
+                  prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
+                )
+              }
+              onClear={() => {
+                setTasksFilter([]);
+                setAssigneeFilter("everyone");
+                setSearchQuery("");
+              }}
+            />
+          ) : (
+            ""
           )}
         </div>
       </RightAside>

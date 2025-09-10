@@ -94,7 +94,10 @@ export default function TasksPage() {
   );
   const [searchQuery, setSearchQuery] = useState("");
 
-  console.log(assigneeFilter);
+  console.log(
+    JSON.stringify(localStorage.getItem("board")) === JSON.stringify(board)
+  );
+
   type Options = {
     currentUser?: string; // used for 'mine' / 'assignedToMe'
     dueSoonDays?: number; // default: 7
@@ -319,6 +322,7 @@ export default function TasksPage() {
       createdAt: new Date().toDateString().slice(0, 3),
     };
 
+    setIsEditing(true);
     setBoard((prev) => ({ ...prev, todo: [newTask, ...prev.todo] }));
     setNewTitle("");
     setNewAssignee("Eli");
@@ -339,90 +343,92 @@ export default function TasksPage() {
               Kanban • Drag & drop • AI helpers
             </div>
           </div>
+          <div className="flex items-center gap-3">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-600">
+                  + New Task
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Create task</DialogTitle>
+                  <DialogDescription>
+                    Quickly add a task to the board.
+                  </DialogDescription>
+                </DialogHeader>
 
-          {isEditing ? (
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={saveBoard}
-                className="bg-indigo-500 hover:bg-indigo-500"
-                disabled={!isDirty}
-              >
-                Save
-              </Button>
-              <Button
-                onClick={discardChanges}
-                className="bg-indigo-700 hover:bg-indigo-700"
-              >
-                Discard Changes
-              </Button>
+                <div className="grid gap-3 py-2">
+                  <label className="text-xs text-slate-400">Title</label>
+                  <Input
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="Fix signup flow"
+                  />
 
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-600">
-                    + New Task
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-lg">
-                  <DialogHeader>
-                    <DialogTitle>Create task</DialogTitle>
-                    <DialogDescription>
-                      Quickly add a task to the board.
-                    </DialogDescription>
-                  </DialogHeader>
+                  <label className="text-xs text-slate-400">Assignee</label>
+                  <Input
+                    value={newAssignee}
+                    onChange={(e) => setNewAssignee(e.target.value)}
+                    placeholder="Eli"
+                  />
 
-                  <div className="grid gap-3 py-2">
-                    <label className="text-xs text-slate-400">Title</label>
-                    <Input
-                      value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                      placeholder="Fix signup flow"
-                    />
+                  <label className="text-xs text-slate-400">Priority</label>
+                  <Select onValueChange={(v) => setNewPriority(v as any)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue>{newPriority}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                    <label className="text-xs text-slate-400">Assignee</label>
-                    <Input
-                      value={newAssignee}
-                      onChange={(e) => setNewAssignee(e.target.value)}
-                      placeholder="Eli"
-                    />
-
-                    <label className="text-xs text-slate-400">Priority</label>
-                    <Select onValueChange={(v) => setNewPriority(v as any)}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue>{newPriority}</SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Low">Low</SelectItem>
-                        <SelectItem value="Medium">Medium</SelectItem>
-                        <SelectItem value="High">High</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="ghost">Cancel</Button>
-                    </DialogClose>
-                    <DialogClose asChild>
-                      <Button onClick={submitNewTask}>Create task</Button>
-                    </DialogClose>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              <Button
-                className="bg-indigo-500"
-                onClick={() => setIsEditing(true)}
-              >
-                <PenLine />
-              </Button>
-              {/* <FilterModal
-                tasksFilter={tasksFilter}
-                setTasksFilter={setTasksFilter}
-              /> */}
-            </div>
-          )}
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="ghost">Cancel</Button>
+                  </DialogClose>
+                  <DialogClose asChild>
+                    <Button onClick={submitNewTask}>Create task</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            {isEditing ? (
+              <>
+                <Button
+                  onClick={saveBoard}
+                  className="bg-indigo-500 hover:bg-indigo-500"
+                  disabled={!isDirty}
+                >
+                  Save
+                </Button>
+                <Button
+                  onClick={discardChanges}
+                  className="bg-indigo-700 hover:bg-indigo-700"
+                >
+                  Discard Changes
+                </Button>
+              </>
+            ) : (
+              <>
+                <FilterModal
+                  tasksFilter={tasksFilter}
+                  setTasksFilter={setTasksFilter}
+                  assigneeFilter={assigneeFilter}
+                  setAssigneeFilter={setAssigneeFilter}
+                />
+                <Button
+                  className="bg-indigo-500"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <PenLine />
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* DnD context around columns */}
@@ -487,8 +493,8 @@ export default function TasksPage() {
               setSearchQuery={setSearchQuery}
               tasksFilter={tasksFilter}
               assigneeFilter={assigneeFilter}
-              onAssigneeChange={setAssigneeFilter}
-              onTogglePriority={(p) =>
+              setAssigneeFilter={setAssigneeFilter}
+              setTasksFilter={(p) =>
                 setTasksFilter((prev) =>
                   prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
                 )

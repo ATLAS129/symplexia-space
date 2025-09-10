@@ -3,15 +3,17 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Search, X } from "lucide-react";
 import { BoardState, Columns, Task, TasksFilter } from "@/types/types";
+import { Switch } from "../ui/Switch";
+import { Label } from "../ui/Label";
 
 type Props = {
   // controlled props (you can pass your tasksFilter state here)
   searchQuery: string;
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   tasksFilter: TasksFilter[]; // e.g. ["Low","High"]
-  onTogglePriority: (p: TasksFilter) => void;
+  setTasksFilter: (p: TasksFilter) => void;
   assigneeFilter: "everyone" | "me";
-  onAssigneeChange: (v: "everyone" | "me") => void;
+  setAssigneeFilter: (v: "everyone" | "me") => void;
   onClear: () => void;
 };
 
@@ -19,9 +21,9 @@ export default function RightAsideFilters({
   searchQuery,
   setSearchQuery,
   tasksFilter = ["lowPriority", "mediumPriority", "highPriority"],
-  onTogglePriority,
+  setTasksFilter,
   assigneeFilter = "everyone",
-  onAssigneeChange,
+  setAssigneeFilter,
   onClear,
 }: Props) {
   const isActive = (p: TasksFilter) => tasksFilter.includes(p);
@@ -75,7 +77,7 @@ export default function RightAsideFilters({
             return (
               <button
                 key={p}
-                onClick={() => onTogglePriority(priority as TasksFilter)}
+                onClick={() => setTasksFilter(priority as TasksFilter)}
                 className={`flex-1 text-xs font-medium py-2 rounded-full shadow-inner transition-all duration-150 focus:outline-none 
                 ${
                   isActive(priority as TasksFilter)
@@ -96,8 +98,21 @@ export default function RightAsideFilters({
         <div className="text-sm font-semibold text-slate-200 mb-2">
           By assignee
         </div>
-        <div className="flex gap-2 bg-slate-950 p-2 rounded-xl border border-slate-800">
-          <Button
+        <div className="w-full flex items-center justify-center">
+          <div className="w-1/3 flex justify-center">
+            <Label>Everyone</Label>
+          </div>
+          <Switch
+            className=""
+            checked={assigneeFilter === "me"}
+            onCheckedChange={() =>
+              setAssigneeFilter(assigneeFilter === "me" ? "everyone" : "me")
+            }
+          />
+          <div className="w-1/3 flex justify-center">
+            <Label>Me</Label>
+          </div>
+          {/* <Button
             onClick={() => onAssigneeChange("everyone")}
             className={`flex-1 text-xs py-2 rounded-md transition-all duration-150 ${
               assigneeFilter === "everyone"
@@ -119,7 +134,7 @@ export default function RightAsideFilters({
             aria-pressed={assigneeFilter === "me"}
           >
             Assigned to me
-          </Button>
+          </Button> */}
         </div>
       </div>
 

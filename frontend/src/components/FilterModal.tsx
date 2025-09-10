@@ -13,13 +13,18 @@ import {
 import { TasksFilter } from "@/types/types";
 import { Checkbox } from "./ui/Checkbox";
 import { Label } from "./ui/Label";
+import { Switch } from "./ui/Switch";
 
 function FilterModal({
   tasksFilter,
   setTasksFilter,
+  assigneeFilter,
+  setAssigneeFilter,
 }: {
   tasksFilter: TasksFilter[];
   setTasksFilter: React.Dispatch<React.SetStateAction<TasksFilter[]>>;
+  assigneeFilter: "everyone" | "me";
+  setAssigneeFilter: React.Dispatch<React.SetStateAction<"everyone" | "me">>;
 }) {
   const [localFilter, setLocalFilter] = useState<TasksFilter[]>();
 
@@ -91,7 +96,16 @@ function FilterModal({
           </div>
           <div className="flex justify-between items-center border-b py-4">
             <h2>By status</h2>
-            <div className="flex items-center justify-center gap-6"></div>
+            <div className="flex items-center justify-center gap-6">
+              <Label>Everyone</Label>
+              <Switch
+                checked={assigneeFilter === "me"}
+                onCheckedChange={() =>
+                  setAssigneeFilter(assigneeFilter === "me" ? "everyone" : "me")
+                }
+              />
+              <Label>Me</Label>
+            </div>
           </div>
         </div>
         <DialogFooter>

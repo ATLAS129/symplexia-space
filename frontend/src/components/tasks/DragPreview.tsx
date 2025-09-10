@@ -8,10 +8,7 @@ export default function DragPreview({ task }: { task?: Task }) {
     <div className="w-full rounded-xl p-3 bg-gradient-to-b from-indigo-600/60 to-pink-500/30 text-white shadow-2xl transform-gpu transition-all duration-180 ease-out scale-105">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Avatar
-            className="w-8 h-8"
-            fallback={task.assignee?.initials ?? "U"}
-          />
+          <Avatar className="w-8 h-8" />
           <div>
             <div className="font-medium">
               {task.title.length > 20
@@ -19,7 +16,7 @@ export default function DragPreview({ task }: { task?: Task }) {
                 : task.title}
             </div>
             <div className="text-xs mt-0.5 opacity-90">
-              {task.assignee?.name ?? "Unassigned"} · {task.due ?? "No due"}
+              {task.assignee?.name ?? "Unassigned"} ·
             </div>
           </div>
         </div>

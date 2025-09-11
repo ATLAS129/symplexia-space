@@ -98,10 +98,8 @@ export default function RightAsideFilters({
         <div className="text-sm font-semibold text-slate-200 mb-2">
           By assignee
         </div>
-        <div className="w-full flex items-center justify-center">
-          <div className="w-1/3 flex justify-center">
-            <Label>Everyone</Label>
-          </div>
+        <div className="w-full flex items-center justify-center gap-6">
+          <Label className="w-1/3 justify-end">Everyone</Label>
           <Switch
             className=""
             checked={assigneeFilter === "me"}
@@ -109,9 +107,7 @@ export default function RightAsideFilters({
               setAssigneeFilter(assigneeFilter === "me" ? "everyone" : "me")
             }
           />
-          <div className="w-1/3 flex justify-center">
-            <Label>Me</Label>
-          </div>
+          <Label className="w-1/3 justify-start">Me</Label>
           {/* <Button
             onClick={() => onAssigneeChange("everyone")}
             className={`flex-1 text-xs py-2 rounded-md transition-all duration-150 ${

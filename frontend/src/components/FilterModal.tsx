@@ -35,7 +35,7 @@ function FilterModal({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="bg-gradient-to-b from-indigo-600 to-indigo-500">
+        <Button className="bg-gradient-to-b from-indigo-600 to-indigo-500 2xl:hidden">
           Filter
         </Button>
       </DialogTrigger>

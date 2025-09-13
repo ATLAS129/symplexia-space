@@ -350,7 +350,7 @@ export default function TasksPage() {
                   + New Task
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-lg">
+              <DialogContent className="max-w-lg bg-gradient-to-r from-slate-950 to-slate-900 text-white border-none">
                 <DialogHeader>
                   <DialogTitle>Create task</DialogTitle>
                   <DialogDescription>
@@ -358,7 +358,7 @@ export default function TasksPage() {
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="grid gap-3 py-2">
+                <div className="grid gap-3 py-2 [&>*]:border-slate-500">
                   <label className="text-xs text-slate-400">Title</label>
                   <Input
                     value={newTitle}
@@ -388,7 +388,7 @@ export default function TasksPage() {
 
                 <DialogFooter>
                   <DialogClose asChild>
-                    <Button variant="ghost">Cancel</Button>
+                    <Button>Cancel</Button>
                   </DialogClose>
                   <DialogClose asChild>
                     <Button onClick={submitNewTask}>Create task</Button>

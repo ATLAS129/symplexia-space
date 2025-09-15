@@ -27,6 +27,7 @@ import EditBoard from "@/components/tasks/EditBoard";
 import Board from "@/components/tasks/Board";
 import { PenLine } from "lucide-react";
 import RightAsideFilters from "@/components/tasks/RightAsideFilter";
+import { useAppSelector } from "@/lib/hooks";
 
 const initialBoard: BoardState = {
   todo: [
@@ -74,6 +75,7 @@ export default function TasksPage() {
       return initialBoard;
     }
   });
+  // const board = useAppSelector((state) => state.tasks) || initialBoard;
 
   const [tasksFilter, setTasksFilter] = useState<TasksFilter[]>([]);
 

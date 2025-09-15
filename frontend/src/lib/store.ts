@@ -1,7 +1,11 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import authReducer from "./states/authSlice";
+import workspaceReducer from "./states/workspaceSlice";
 
-const rootReducer = combineReducers({ auth: authReducer });
+const rootReducer = combineReducers({
+  auth: authReducer,
+  workspace: workspaceReducer,
+});
 
 export const makeStore = () => {
   const isServer = typeof window === "undefined";

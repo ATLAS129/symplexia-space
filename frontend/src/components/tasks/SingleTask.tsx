@@ -34,7 +34,7 @@ export default function SingleTask({ task }: { task: Task }) {
   >();
 
   return (
-    <div className="flex items-start justify-between gap-3">
+    <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-3">
         <Avatar className="w-9 h-9" />
         <div>

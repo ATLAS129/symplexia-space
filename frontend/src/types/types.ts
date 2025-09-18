@@ -7,7 +7,6 @@ export type Task = {
   priority?: "Low" | "Medium" | "High";
   createdAt?: string;
   updatedAt?: string;
-  // project     Project  @relation(fields: [projectId], references: [id])
 };
 
 export type TasksFilter =

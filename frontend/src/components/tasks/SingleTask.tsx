@@ -10,19 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
-import { Button } from "@/components/ui/Button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/Dialog";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
+import { Dialog, DialogTrigger } from "@/components/ui/Dialog";
 import DeleteModal from "./dropdownitems/DeleteModal";
 import ViewModal from "./dropdownitems/ViewModal";
 import ShareModal from "./dropdownitems/ShareModal";
@@ -98,11 +86,7 @@ export default function SingleTask({ task }: { task: Task }) {
           {isOpen === "delete" && <DeleteModal />}
           {isOpen === "view" && <ViewModal />}
           {isOpen === "share" && <ShareModal />}
-          {isOpen === "edit" && <EditModal />}
-          {/* <DeleteModal open={isOpen === "delete"} setIsOpen={setIsOpen} />
-          <ViewModal open={isOpen === "view"} setIsOpen={setIsOpen} />
-          <ShareModal open={isOpen === "share"} setIsOpen={setIsOpen} />
-          <EditModal open={isOpen === "edit"} setIsOpen={setIsOpen} /> */}
+          {isOpen === "edit" && <EditModal task={task} />}
         </Dialog>
       </div>
     </div>

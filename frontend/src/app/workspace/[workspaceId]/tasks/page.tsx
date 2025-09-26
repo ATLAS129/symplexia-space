@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -27,55 +27,21 @@ import EditBoard from "@/components/tasks/EditBoard";
 import Board from "@/components/tasks/Board";
 import { PenLine } from "lucide-react";
 import RightAsideFilters from "@/components/tasks/RightAsideFilter";
-import { useAppSelector } from "@/lib/hooks";
-
-const initialBoard: BoardState = {
-  todo: [
-    {
-      id: "t-1",
-      title: "Design system: tokens + components",
-      assignee: { name: ["Eli"] },
-      priority: "High",
-      createdAt: "Wed",
-    },
-    {
-      id: "t-2",
-      title: "Write onboarding copy",
-      assignee: { name: ["Maya"] },
-      priority: "Medium",
-      createdAt: "Fri",
-    },
-  ],
-  inprogress: [
-    {
-      id: "t-3",
-      title: "Realtime sync (Yjs) POC",
-      assignee: { name: ["Jon"] },
-      priority: "High",
-      createdAt: "Thu",
-    },
-  ],
-  done: [
-    {
-      id: "t-4",
-      title: "Landing page hero",
-      assignee: { name: ["Eli"] },
-      priority: "Low",
-      createdAt: "Yesterday",
-    },
-  ],
-};
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import {
+  addTask,
+  setBoard as setBoardAction,
+} from "@/lib/states/workspaceSlice";
 
 export default function TasksPage() {
-  const [board, setBoard] = useState<BoardState>(() => {
-    try {
-      const raw = localStorage.getItem("board");
-      return raw ? JSON.parse(raw) : initialBoard;
-    } catch (e) {
-      return initialBoard;
-    }
-  });
-  // const board = useAppSelector((state) => state.tasks) || initialBoard;
+  // board is now stored in redux
+  const board = useAppSelector((s) => s.workspace.board) as BoardState;
+  const dispatch = useAppDispatch();
+  const tasks: Task[] = useAppSelector(
+    (state) => state.workspace.tasks
+  ) as Task[];
+
+  console.log(tasks);
 
   const [tasksFilter, setTasksFilter] = useState<TasksFilter[]>([]);
 
@@ -96,13 +62,9 @@ export default function TasksPage() {
   );
   const [searchQuery, setSearchQuery] = useState("");
 
-  console.log(
-    JSON.stringify(localStorage.getItem("board")) === JSON.stringify(board)
-  );
-
   type Options = {
-    currentUser?: string; // used for 'mine' / 'assignedToMe'
-    dueSoonDays?: number; // default: 7
+    currentUser?: string;
+    dueSoonDays?: number;
   };
   function filterAndSearchBoard(
     board: BoardState,
@@ -117,7 +79,6 @@ export default function TasksPage() {
     const filters = tasksFilter ?? [];
     const hasFilters = filters.length > 0;
 
-    // fast path: nothing to do
     if (!hasQuery && !hasFilters) return board;
 
     const now = Date.now();
@@ -153,11 +114,9 @@ export default function TasksPage() {
           return t >= startOfToday && t <= startOfToday + msInDay - 1;
         }
         case "dueSoon": {
-          // interpret createdAt as a timestamp for due date if parsable.
           if (!task.createdAt) return false;
           const t = Date.parse(task.createdAt);
           if (isNaN(t)) return false;
-          // NOTE: semantics: dueSoon = createdAt is within now..dueSoonThreshold
           return t >= now && t <= dueSoonThreshold;
         }
         case "mine": {
@@ -172,7 +131,6 @@ export default function TasksPage() {
 
     const matchesFilters = (task: Task) => {
       if (!hasFilters) return true;
-      // OR logic across provided filter keys
       return filters.some((f) => matchesFilterKey(task, f));
     };
 
@@ -193,111 +151,13 @@ export default function TasksPage() {
       currentUser: "Eli",
       dueSoonDays: 3,
     });
-  }, [board, searchQuery, tasksFilter]);
-
-  // function filterBoard(board: BoardState, query: string): BoardState {
-  //   const q = (query ?? "").trim().toLowerCase();
-  //   if (!q) return board;
-
-  //   const tokens = q.split(/\s+/).filter(Boolean);
-  //   if (tokens.length === 0) return board;
-
-  //   const columns = Object.keys(board) as Columns[];
-
-  //   const matchesTask = (task: Task): boolean => {
-  //     // build searchable text for this task
-  //     const title = task.title ?? "";
-  //     const assigneeName = task.assignee?.name ?? "";
-  //     const initials = task.assignee?.initials ?? "";
-  //     const priority = task.priority ?? "";
-  //     const createdAt = task.createdAt ?? "";
-
-  //     const hay =
-  //       `${title} ${assigneeName} ${initials} ${priority} ${createdAt}`.toLowerCase();
-
-  //     // every token must be present
-  //     return tokens.every((t) => hay.indexOf(t) !== -1);
-  //   };
-
-  //   const result: BoardState = {} as BoardState;
-  //   for (const col of columns) {
-  //     result[col] = board[col].filter(matchesTask);
-  //   }
-
-  //   return result;
-  // }
-
-  // const filtered = useMemo(
-  //   () => filterBoard(board, searchQuery),
-  //   [board, searchQuery]
-  // );
-
-  // const filtered = useMemo(() => {
-  //   // no filters -> return original board unchanged
-  // if (!tasksFilter || tasksFilter.length === 0) return board;
-
-  // const now = new Date();
-  // const msInDay = 1000 * 60 * 60 * 24;
-  // const startOfToday = new Date(
-  //   now.getFullYear(),
-  //   now.getMonth(),
-  //   now.getDate()
-  // ).getTime();
-  // const endOfToday = startOfToday + msInDay - 1;
-  // // const dueSoonThreshold = now.getTime() + dueSoonDays * msInDay;
-
-  // const matches = (task: Task): boolean => {
-  //   // if any filter matches -> include the task (OR logic)
-  //   return tasksFilter.some((filter) => {
-  //     switch (filter) {
-  //       // case "mine":
-  //       //   return !!task.assignee && task.assignee.name === currentUser;
-
-  //       case "highPriority":
-  //         return task.priority === "High";
-
-  //       case "mediumPriority":
-  //         return task.priority === "Medium";
-
-  //       case "lowPriority":
-  //         return task.priority === "Low";
-
-  //       case "dueSoon": {
-  //         if (!task.createdAt) return false;
-  //         const t = new Date(task.createdAt).getTime();
-  //         // dueSoon means timestamp is between now and dueSoonThreshold
-  //         // return t >= now.getTime() && t <= dueSoonThreshold;
-  //       }
-
-  //       case "createdToday": {
-  //         if (!task.createdAt) return false;
-  //         const t = new Date(task.createdAt).getTime();
-  //         return t >= startOfToday && t <= endOfToday;
-  //       }
-
-  //       default:
-  //         return false;
-  //     }
-  //   });
-  // };
-
-  // const filteredBoard: BoardState = {
-  //   todo: [],
-  //   inprogress: [],
-  //   done: [],
-  // };
-
-  // (Object.keys(board) as Columns[]).forEach((col) => {
-  //   filteredBoard[col] = board[col].filter(matches);
-  // });
-
-  // return filteredBoard;
-  // }, [board, tasksFilter]);
+  }, [board, tasks, searchQuery, tasksFilter]);
 
   // save & discard helpers
   const saveBoard = () => {
     try {
       localStorage.setItem("board", JSON.stringify(board));
+      dispatch(setBoardAction({ board }));
       lastSavedRef.current = board;
       setIsDirty(false);
       setIsEditing(false);
@@ -308,7 +168,8 @@ export default function TasksPage() {
   };
 
   const discardChanges = () => {
-    setBoard(lastSavedRef.current);
+    // revert redux board to last saved
+    dispatch(setBoardAction({ board: lastSavedRef.current }));
     setIsDirty(false);
     setIsEditing(false);
   };
@@ -320,16 +181,28 @@ export default function TasksPage() {
       assignee: {
         name: [newAssignee || "Eli"],
       },
+      status: "todo",
       priority: newPriority,
       createdAt: new Date().toDateString().slice(0, 3),
     };
 
     setIsEditing(true);
-    setBoard((prev) => ({ ...prev, todo: [newTask, ...prev.todo] }));
+    dispatch(addTask({ task: newTask }));
+    // keep the redux board in sync locally
+    const nextBoard: BoardState = { ...board, todo: [newTask, ...board.todo] };
+    dispatch(setBoardAction({ board: nextBoard }));
     setNewTitle("");
     setNewAssignee("Eli");
     setNewPriority("Medium");
     setIsDirty(true);
+  };
+
+  // wrapper that accepts either a BoardState or an updater function (like setState)
+  const setBoardWrapper = (
+    next: BoardState | ((prev: BoardState) => BoardState)
+  ) => {
+    const newBoard = typeof next === "function" ? (next as any)(board) : next;
+    dispatch(setBoardAction({ board: newBoard }));
   };
 
   return (
@@ -424,7 +297,10 @@ export default function TasksPage() {
                 />
                 <Button
                   className="bg-indigo-500"
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => {
+                    lastSavedRef.current = board;
+                    setIsEditing(true);
+                  }}
                 >
                   <PenLine />
                 </Button>
@@ -438,57 +314,16 @@ export default function TasksPage() {
           <EditBoard
             board={board}
             setIsDirty={setIsDirty}
-            setBoard={setBoard}
+            setBoard={setBoardWrapper}
           />
         ) : (
-          <Board board={filtered} />
+          <Board board={filtered as BoardState} />
         )}
       </section>
 
       {/* Right panel */}
       <RightAside>
-        {/* <div className="pt-3 flex items-center justify-between">
-          <h4 className="font-semibold">AI Tools</h4>
-          <div className="text-xs text-slate-400">beta</div>
-        </div>
-        <div className="mt-4 space-y-3">
-          <Button className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 font-semibold">
-            Summarize selection
-          </Button>
-          <Button className="w-full px-4 py-3 rounded-xl bg-white/6">
-            Draft task
-          </Button>
-          <Button className="w-full px-4 py-3 rounded-xl border border-white/6">
-            Suggest next steps
-          </Button>
-        </div> */}
         <div className="py-3">
-          {/* <Button
-              variant="ghost"
-              className="justify-start"
-              onClick={() => {
-                setTasksFilter((prev) =>
-                  prev.includes("mine")
-                    ? prev.filter((f) => f !== "mine")
-                    : [...prev, "mine"]
-                );
-              }}
-            >
-              Assigned to me
-            </Button>
-            <Button
-              variant="ghost"
-              className="justify-start"
-              onClick={() => {
-                setTasksFilter((prev) =>
-                  prev.includes("dueSoon")
-                    ? prev.filter((f) => f !== "dueSoon")
-                    : [...prev, "dueSoon"]
-                );
-              }}
-            >
-              Due soon
-            </Button> */}
           {!isEditing ? (
             <RightAsideFilters
               searchQuery={searchQuery}

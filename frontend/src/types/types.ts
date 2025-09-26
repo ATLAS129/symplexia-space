@@ -7,6 +7,7 @@ export type Task = {
   priority?: "Low" | "Medium" | "High";
   createdAt?: string;
   updatedAt?: string;
+  status: "todo" | "inprogress" | "done";
 };
 
 export type TasksFilter =

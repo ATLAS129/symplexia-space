@@ -83,9 +83,9 @@ export default function SingleTask({ task }: { task: Task }) {
               </DialogTrigger>
             </DropdownMenuContent>
           </DropdownMenu>
-          {isOpen === "delete" && <DeleteModal />}
-          {isOpen === "view" && <ViewModal />}
-          {isOpen === "share" && <ShareModal />}
+          {isOpen === "delete" && <DeleteModal task={{ id: task.id }} />}
+          {isOpen === "view" && <ViewModal task={task} />}
+          {isOpen === "share" && <ShareModal task={task} />}
           {isOpen === "edit" && <EditModal task={task} />}
         </Dialog>
       </div>

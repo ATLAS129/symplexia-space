@@ -20,6 +20,8 @@ import {
 import DroppableColumn from "./DroppableColumn";
 import SortableTask from "./SortableTask";
 import DragPreview from "./DragPreview";
+import { useAppDispatch } from "@/lib/hooks";
+import { moveTask } from "@/lib/states/workspaceSlice";
 
 const COLUMN_ORDER: Columns[] = ["todo", "inprogress", "done"];
 
@@ -32,6 +34,7 @@ export default function EditBoard({
   setBoard: (board: any) => void;
   setIsDirty: (dirty: boolean) => void;
 }) {
+  const dispatch = useAppDispatch();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draggingTask, setDraggingTask] = useState<Task | null>(null);
 
@@ -118,15 +121,26 @@ export default function EditBoard({
       return;
     }
 
-    // cross-column move
+    // cross-column move: delegate to Redux moveTask (keeps board+tasks consistent)
     const taskToMove = board[sourceCol][sourceIndex];
     if (!taskToMove) return;
+
+    // dispatch move to redux, parent (page) still holds the canonical setBoard in its wrapper
+    dispatch(
+      moveTask({
+        id: taskToMove.id,
+        from: sourceCol,
+        to: destCol,
+        index: destIndex,
+      })
+    );
 
     setBoard((prev: any) => {
       const newSource = prev[sourceCol].filter((t: any) => t.id !== activeId);
       const newDest = [...prev[destCol]];
       const at = Math.min(Math.max(destIndex, 0), newDest.length);
-      newDest.splice(at, 0, taskToMove);
+      const moved = { ...taskToMove, status: destCol };
+      newDest.splice(at, 0, moved);
       return { ...prev, [sourceCol]: newSource, [destCol]: newDest };
     });
     setIsDirty(true);

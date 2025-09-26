@@ -9,8 +9,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/Dialog";
+import { Task } from "@/types/types";
 
-export default function ShareModal() {
+export default function ShareModal({ task }: { task: Task }) {
   return (
     <DialogContent className="sm:max-w-[425px] bg-gradient-to-r from-slate-950 to-slate-900 text-white border-none">
       <DialogHeader>

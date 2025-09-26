@@ -9,8 +9,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/Dialog";
+import { deleteTask } from "@/lib/states/workspaceSlice";
+import { Task } from "@/types/types";
+import { useDispatch } from "react-redux";
 
-export default function DeleteModal() {
+export default function DeleteModal({ task }: { task: Pick<Task, "id"> }) {
+  const dispatch = useDispatch();
   return (
     <DialogContent
       className="sm:max-w-[425px] bg-gradient-to-r from-slate-950 to-slate-900 text-white border-none"
@@ -27,7 +31,12 @@ export default function DeleteModal() {
           <Button>Cancel</Button>
         </DialogClose>
         <DialogClose asChild>
-          <Button variant="destructive">Delete</Button>
+          <Button
+            variant="destructive"
+            onClick={() => dispatch(deleteTask({ id: task.id }))}
+          >
+            Delete
+          </Button>
         </DialogClose>
       </DialogFooter>
     </DialogContent>

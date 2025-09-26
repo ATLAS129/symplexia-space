@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/Select";
 import { useAppSelector } from "@/lib/hooks";
-import { setTask } from "@/lib/states/workspaceSlice";
+import { setTasks } from "@/lib/states/workspaceSlice";
 import { Task } from "@/types/types";
 import { useState } from "react";
 import { useDispatch } from "react-redux";

@@ -541,17 +541,7 @@ export default function MembersPage() {
           <div className="text-slate-400 text-xs">Filter by role</div>
         </div> */}
 
-        <div className="mt-4">
-          <Button
-            className={`w-1/5 px-4 py-3 rounded-xl bg-white/6 ${
-              roleFilter.length === 0
-                ? "bg-gradient-to-r from-indigo-500 to-pink-500"
-                : ""
-            }`}
-            onClick={() => setRoleFilter([])}
-          >
-            All
-          </Button>
+        <div className="mt-4 flex justify-evenly">
           {/* <Button
             className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
             variant={roleFilter === "All" ? "default" : "ghost"}

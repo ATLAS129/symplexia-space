@@ -104,6 +104,14 @@ const workspaceSlice = createSlice({
         todo: [action.payload.task, ...state.board.todo],
       };
     },
+    editTask(state, action) {
+      const newTask = state.tasks.map((task) =>
+        task.id === action.payload.id ? action.payload.task : task
+      );
+      console.log("new tasksksk", newTask);
+      state.tasks = newTask;
+      state.board = buildBoard(newTask);
+    },
     moveTask(
       state,
       action: {
@@ -174,6 +182,7 @@ const workspaceSlice = createSlice({
 export const {
   setTasks,
   addTask,
+  editTask,
   deleteTask,
   setBoard,
   // editTaskStatus,

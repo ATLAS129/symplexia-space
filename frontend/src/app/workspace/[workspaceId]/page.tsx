@@ -1,3 +1,3 @@
-export default function WorkspacePage() {
+export default async function WorkspacePage() {
   return <div>Workspace Page</div>;
 }

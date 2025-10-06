@@ -27,3 +27,14 @@ export type Document = {
 
 export type Columns = "todo" | "inprogress" | "done";
 export type BoardState = Record<Columns, Task[]>;
+
+export type Role = "Owner" | "Admin" | "Editor" | "Viewer";
+
+export type Member = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  initials?: string;
+  invited?: boolean;
+};

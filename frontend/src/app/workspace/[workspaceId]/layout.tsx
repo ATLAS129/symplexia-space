@@ -1,3 +1,4 @@
+import HydrateProjectData from "@/components/HydrateProjectId";
 import NavItem from "@/components/NavItem";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -136,6 +137,7 @@ export default async function layout({
         </div>
       </aside>
 
+      <HydrateProjectData projectInfo={workspaceId} />
       {children}
     </div>
   );

@@ -35,11 +35,12 @@ import {
 
 export default function TasksPage() {
   // board is now stored in redux
-  const board = useAppSelector((s) => s.workspace.board) as BoardState;
+  const board = useAppSelector((state) => state.workspace.board) as BoardState;
   const dispatch = useAppDispatch();
   const tasks: Task[] = useAppSelector(
     (state) => state.workspace.tasks
   ) as Task[];
+  const projectId = useAppSelector((state) => state.workspace.projectId);
 
   console.log(tasks);
 
@@ -177,6 +178,7 @@ export default function TasksPage() {
   const submitNewTask = () => {
     const newTask: Task = {
       id: Date.now().toString(),
+      projectId: projectId as string,
       title: newTitle.trim() || "Untitled task",
       assignee: {
         name: [newAssignee || "Eli"],
@@ -323,29 +325,27 @@ export default function TasksPage() {
 
       {/* Right panel */}
       <RightAside>
-        <div className="py-3">
-          {!isEditing ? (
-            <RightAsideFilters
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              tasksFilter={tasksFilter}
-              assigneeFilter={assigneeFilter}
-              setAssigneeFilter={setAssigneeFilter}
-              setTasksFilter={(p) =>
-                setTasksFilter((prev) =>
-                  prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
-                )
-              }
-              onClear={() => {
-                setTasksFilter([]);
-                setAssigneeFilter("everyone");
-                setSearchQuery("");
-              }}
-            />
-          ) : (
-            ""
-          )}
-        </div>
+        {!isEditing ? (
+          <RightAsideFilters
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            tasksFilter={tasksFilter}
+            assigneeFilter={assigneeFilter}
+            setAssigneeFilter={setAssigneeFilter}
+            setTasksFilter={(p) =>
+              setTasksFilter((prev) =>
+                prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
+              )
+            }
+            onClear={() => {
+              setTasksFilter([]);
+              setAssigneeFilter("everyone");
+              setSearchQuery("");
+            }}
+          />
+        ) : (
+          ""
+        )}
       </RightAside>
     </>
   );

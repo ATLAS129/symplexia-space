@@ -1,15 +1,8 @@
 "use client";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Avatar } from "@/components/ui/Avatar";
 import {
   Dialog,
   DialogTrigger,
@@ -27,20 +20,11 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/Select";
-import { Badge } from "@/components/ui/Badge";
 import RightAside from "@/components/RightAside";
-import { Toggle } from "@/components/ui/Toggle";
-
-type Role = "Owner" | "Admin" | "Editor" | "Viewer";
-
-type Member = {
-  id: string;
-  name: string;
-  email: string;
-  role: Role;
-  initials?: string;
-  invited?: boolean;
-};
+import { X } from "lucide-react";
+import MemberCard from "@/components/members/MemberCard";
+import { Member, Role } from "@/types/types";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 
 const initialMembers: Member[] = [
   {
@@ -69,6 +53,8 @@ const initialMembers: Member[] = [
 export default function MembersPage() {
   // state
   const [members, setMembers] = useState<Member[]>(initialMembers);
+  const membersState = useAppSelector((state) => state.workspace.members);
+  const dispatch = useAppDispatch();
 
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<Role[]>([]);
@@ -100,34 +86,6 @@ export default function MembersPage() {
   }, [members, query, roleFilter]);
 
   /* ---------------- actions ---------------- */
-  const changeRole = useCallback((id: string, newRole: Role) => {
-    setMembers((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, role: newRole } : m))
-    );
-  }, []);
-
-  const removeMember = useCallback((id: string) => {
-    if (!confirm("Remove member from workspace?")) return;
-    setMembers((prev) => prev.filter((m) => m.id !== id));
-  }, []);
-
-  const promoteToOwner = useCallback((id: string) => {
-    if (
-      !confirm(
-        "Make this member the workspace owner? Current owner will become Editor."
-      )
-    )
-      return;
-    setMembers((prev) =>
-      prev.map((m) =>
-        m.id === id
-          ? { ...m, role: "Owner" }
-          : m.role === "Owner"
-          ? { ...m, role: "Editor" }
-          : m
-      )
-    );
-  }, []);
 
   /* ---------------- invite ---------------- */
   const onInvite = useCallback(() => {
@@ -255,10 +213,11 @@ export default function MembersPage() {
                 Manage roles, invitations, and activity for your team.
               </p>
               <div className="mt-3 flex items-center gap-3">
-                <div className="text-xs text-slate-400">Total</div>
                 <div className="flex items-center gap-2">
-                  <div className="text-sm font-medium">{countByRole.total}</div>
-                  <div className="flex gap-2 text-xs">
+                  <div className="flex items-center gap-2 text-xs">
+                    <div className="text-sm text-slate-400">
+                      Total {countByRole.total}
+                    </div>
                     <div className=" text-red-300">
                       Owner {countByRole.owner}
                     </div>
@@ -376,96 +335,22 @@ export default function MembersPage() {
           </div>
 
           {/* Main content area: two-column responsive layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-            {/* Center: member cards */}
-            {filtered.length === 0 ? (
-              <div className="rounded-2xl bg-white/3 p-8 text-center text-slate-400">
-                No members found. Invite someone to get started.
-              </div>
-            ) : (
-              filtered.map((m) => (
-                <article
-                  key={m.id}
-                  className="rounded-2xl bg-gradient-to-b from-black/50 to-black/30 border border-white/6 p-4 transition hover:scale-[1.01]"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-12 h-12" />
-                      <div>
-                        <div className="font-semibold text-lg">{m.name}</div>
-                        <div className="text-xs text-slate-400">{m.email}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-end gap-2">
-                      <Badge
-                        className={`${
-                          m.role === "Owner"
-                            ? "bg-red-500 text-white"
-                            : m.role === "Admin"
-                            ? "bg-green-500 text-white"
-                            : m.role === "Editor"
-                            ? "bg-blue-500 text-white"
-                            : "bg-gray-200 text-gray-800"
-                        }`}
-                      >
-                        {m.role}
-                      </Badge>
-                      <div className="text-xs text-slate-400">ID: {m.id}</div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <Select
-                        onValueChange={(v) => changeRole(m.id, v as Role)}
-                        defaultValue={m.role}
-                      >
-                        <SelectTrigger className="text-sm">
-                          <SelectValue>{m.role}</SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Owner">Owner</SelectItem>
-                          <SelectItem value="Admin">Admin</SelectItem>
-                          <SelectItem value="Editor">Editor</SelectItem>
-                          <SelectItem value="Viewer">Viewer</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      {m.invited ? (
-                        <div className="px-2 py-1 rounded-md text-xs text-amber-300 bg-amber-900/10">
-                          Invited
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {m.role !== "Owner" ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => promoteToOwner(m.id)}
-                        >
-                          Make owner
-                        </Button>
-                      ) : (
-                        <div className="text-xs text-slate-400">
-                          Workspace owner
-                        </div>
-                      )}
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removeMember(m.id)}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  </div>
-                </article>
-              ))
-            )}
-          </div>
+          {filtered.length === 0 ? (
+            <div className="w-full h-25 rounded-2xl bg-white/3 p-8 text-center text-slate-400">
+              No members found
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+              {filtered.map((member) => (
+                // Center: member cards
+                <MemberCard
+                  key={member.id}
+                  member={member}
+                  setMembers={setMembers}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Footer / helpers */}
           {/* <div className="mt-6 rounded-2xl bg-white/3 p-4 border border-white/6 flex items-center justify-between">
@@ -532,136 +417,88 @@ export default function MembersPage() {
 
       {/* Right sidebar */}
       <RightAside>
-        <div className="pt-3 flex items-center justify-between">
-          <div className="font-semibold">Filters & quick actions</div>
-          <div className="text-slate-400 text-xs">Filter by role</div>
-        </div>
-        {/* <div className="pt-3 flex items-center justify-between">
-          <div className="font-semibold">Filters & quick actions</div>
-          <div className="text-slate-400 text-xs">Filter by role</div>
-        </div> */}
+        <div className="py-4 px-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-sm font-medium text-slate-300">Filters</div>
+              <div className="text-xs text-slate-400">
+                Show members by roles
+              </div>
+            </div>
 
-        <div className="mt-4 flex justify-evenly">
-          {/* <Button
-            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
-            variant={roleFilter === "All" ? "default" : "ghost"}
-            onClick={() => setRoleFilter("All")}
-          >
-            All
-          </Button> */}
-          <Button
-            className={`w-1/5 px-4 py-3 rounded-xl bg-white/6 ${
-              roleFilter.includes("Owner")
-                ? "bg-gradient-to-r from-indigo-500 to-pink-500"
-                : ""
-            }`}
-            // variant={roleFilter.includes("Owner") ? "default" : "ghost"}
-            onClick={() =>
-              roleFilter.includes("Owner")
-                ? setRoleFilter(roleFilter.filter((r) => r !== "Owner"))
-                : setRoleFilter([...roleFilter, "Owner"])
-            }
-          >
-            Owner
-          </Button>
-          <Button
-            className={`w-1/5 px-4 py-3 rounded-xl bg-white/6 ${
-              roleFilter.includes("Admin")
-                ? "bg-gradient-to-r from-indigo-500 to-pink-500"
-                : ""
-            }`}
-            // variant={roleFilter.includes("Admin") ? "default" : "ghost"}
-            onClick={() =>
-              roleFilter.includes("Admin")
-                ? setRoleFilter(roleFilter.filter((r) => r !== "Admin"))
-                : setRoleFilter([...roleFilter, "Admin"])
-            }
-          >
-            Admin
-          </Button>
-          <Button
-            className={`w-1/5 px-4 py-3 rounded-xl bg-white/6 ${
-              roleFilter.includes("Editor")
-                ? "bg-gradient-to-r from-indigo-500 to-pink-500"
-                : ""
-            }`}
-            // variant={roleFilter.includes("Editor") ? "default" : "ghost"}
-            onClick={() =>
-              roleFilter.includes("Editor")
-                ? setRoleFilter(
-                    roleFilter.filter((r) => r !== "Editor") as Role[]
-                  )
-                : setRoleFilter([...roleFilter, "Editor"])
-            }
-          >
-            Editor
-          </Button>
-          <Button
-            className={`w-1/5 px-4 py-3 rounded-xl bg-white/6 ${
-              roleFilter.includes("Viewer")
-                ? "bg-gradient-to-r from-indigo-500 to-pink-500"
-                : ""
-            }`}
-            // variant={roleFilter.includes("Viewer") ? "default" : "ghost"}
-            onClick={() =>
-              roleFilter.includes("Viewer")
-                ? setRoleFilter(roleFilter.filter((r) => r !== "Viewer"))
-                : setRoleFilter([...roleFilter, "Viewer"])
-            }
-          >
-            Viewer
-          </Button>
-        </div>
-        {/* <div className="mt-4 space-y-3 flex gap-2 px-2">
-          <Button
-            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
-            variant={roleFilter === "All" ? "default" : "ghost"}
-            onClick={() => setRoleFilter("All")}
-          >
-            All
-          </Button>
-          <Button
-            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
-            variant={roleFilter === "Owner" ? "default" : "ghost"}
-            onClick={() => setRoleFilter("Owner")}
-          >
-            Owner
-          </Button>
-          <Button
-            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
-            variant={roleFilter === "Admin" ? "default" : "ghost"}
-            onClick={() => setRoleFilter("Admin")}
-          >
-            Admin
-          </Button>
-          <Button
-            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
-            variant={roleFilter === "Editor" ? "default" : "ghost"}
-            onClick={() => setRoleFilter("Editor")}
-          >
-            Editor
-          </Button>
-          <Button
-            className="w-1/5 px-4 py-3 rounded-xl bg-white/6"
-            variant={roleFilter === "Viewer" ? "default" : "ghost"}
-            onClick={() => setRoleFilter("Viewer")}
-          >
-            Viewer
-          </Button>
-        </div> */}
-
-        {/* <div>
-          <div className="text-xs text-slate-400 mb-1">Quick actions</div>
-        </div> */}
-
-        {/* <div>
-          <div className="text-xs text-slate-400 mb-1">Role guide</div>
-          <div className="mt-6 text-xs text-slate-400">
-            <div>• Daily summary (scheduled)</div>
-            <div>• Auto-extract todos</div>
-            <div>• Export audit logs</div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-1 rounded-md text-slate-400 hover:bg-white/5"
+                onClick={() => setRoleFilter([])}
+                aria-label="Clear filters"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div> */}
+
+          <div className="mt-4 flex justify-evenly">
+            <Button
+              className={`w-1/5 px-4 py-3 rounded-xl bg-white/6 ${
+                roleFilter.includes("Owner")
+                  ? "bg-gradient-to-r from-indigo-500 to-pink-500"
+                  : ""
+              }`}
+              onClick={() =>
+                roleFilter.includes("Owner")
+                  ? setRoleFilter(roleFilter.filter((r) => r !== "Owner"))
+                  : setRoleFilter([...roleFilter, "Owner"])
+              }
+            >
+              Owner
+            </Button>
+            <Button
+              className={`w-1/5 px-4 py-3 rounded-xl bg-white/6 ${
+                roleFilter.includes("Admin")
+                  ? "bg-gradient-to-r from-indigo-500 to-pink-500"
+                  : ""
+              }`}
+              onClick={() =>
+                roleFilter.includes("Admin")
+                  ? setRoleFilter(roleFilter.filter((r) => r !== "Admin"))
+                  : setRoleFilter([...roleFilter, "Admin"])
+              }
+            >
+              Admin
+            </Button>
+            <Button
+              className={`w-1/5 px-4 py-3 rounded-xl bg-white/6 ${
+                roleFilter.includes("Editor")
+                  ? "bg-gradient-to-r from-indigo-500 to-pink-500"
+                  : ""
+              }`}
+              onClick={() =>
+                roleFilter.includes("Editor")
+                  ? setRoleFilter(
+                      roleFilter.filter((r) => r !== "Editor") as Role[]
+                    )
+                  : setRoleFilter([...roleFilter, "Editor"])
+              }
+            >
+              Editor
+            </Button>
+            <Button
+              className={`w-1/5 px-4 py-3 rounded-xl bg-white/6 ${
+                roleFilter.includes("Viewer")
+                  ? "bg-gradient-to-r from-indigo-500 to-pink-500"
+                  : ""
+              }`}
+              onClick={() =>
+                roleFilter.includes("Viewer")
+                  ? setRoleFilter(roleFilter.filter((r) => r !== "Viewer"))
+                  : setRoleFilter([...roleFilter, "Viewer"])
+              }
+            >
+              Viewer
+            </Button>
+          </div>
+        </div>
       </RightAside>
     </>
   );

@@ -10,6 +10,7 @@ function buildBoard(tasks: Task[]): BoardState {
 }
 
 interface WorkspaceState {
+  projectId: string;
   name: string;
   members: string[];
   board: BoardState;
@@ -18,6 +19,7 @@ interface WorkspaceState {
 
 const initialState: WorkspaceState = {
   name: "",
+  projectId: "",
   members: [],
   tasks: [
     // {
@@ -93,6 +95,9 @@ const workspaceSlice = createSlice({
   name: "workspace",
   initialState,
   reducers: {
+    setProjectId(state, action) {
+      state.projectId = action.payload.projectId;
+    },
     setTasks(state, action) {
       state.tasks = action.payload.tasks;
       state.board = buildBoard(action.payload.tasks);
@@ -180,6 +185,7 @@ const workspaceSlice = createSlice({
 });
 
 export const {
+  setProjectId,
   setTasks,
   addTask,
   editTask,

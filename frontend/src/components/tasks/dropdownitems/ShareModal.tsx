@@ -39,10 +39,9 @@ export default function ShareModal({ task }: { task: Task }) {
       </div>
       <DialogFooter>
         <DialogClose asChild>
-          <Button>Cancel</Button>
-        </DialogClose>
-        <DialogClose asChild>
-          <Button onClick={handleCopy}>{copied ? "Copied!" : "Copy"}</Button>
+          <Button onClick={handleCopy} className="w-full">
+            {copied ? "Copied!" : "Copy"}
+          </Button>
         </DialogClose>
       </DialogFooter>
     </DialogContent>

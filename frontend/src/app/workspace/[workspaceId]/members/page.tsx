@@ -3,28 +3,13 @@ import React, { useCallback, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-  DialogClose,
-} from "@/components/ui/Dialog";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+
 import RightAside from "@/components/RightAside";
 import { X } from "lucide-react";
 import MemberCard from "@/components/members/MemberCard";
 import { Member, Role } from "@/types/types";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import InviteModal from "@/components/members/InviteModal";
 
 const initialMembers: Member[] = [
   {
@@ -60,11 +45,6 @@ export default function MembersPage() {
   const [roleFilter, setRoleFilter] = useState<Role[]>([]);
 
   // invite modal
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteName, setInviteName] = useState("");
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<Role>("Viewer");
-  const [inviteError, setInviteError] = useState<string | null>(null);
 
   // CSV import modal
   // const [csvOpen, setCsvOpen] = useState(false);
@@ -88,44 +68,6 @@ export default function MembersPage() {
   /* ---------------- actions ---------------- */
 
   /* ---------------- invite ---------------- */
-  const onInvite = useCallback(() => {
-    setInviteError(null);
-    const email = inviteEmail.trim();
-    const name = inviteName.trim();
-
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setInviteError("Please provide a valid email.");
-      return;
-    }
-    if (!name) {
-      setInviteError("Please provide the member's name.");
-      return;
-    }
-    if (members.some((m) => m.email.toLowerCase() === email.toLowerCase())) {
-      setInviteError("This email is already a member or invited.");
-      return;
-    }
-
-    const newMember: Member = {
-      id: String(Math.floor(Math.random() * 100)),
-      name,
-      email,
-      role: inviteRole,
-      initials: name
-        .split(" ")
-        .map((s) => s[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase(),
-      invited: true,
-    };
-
-    setMembers((prev) => [newMember, ...prev]);
-    setInviteName("");
-    setInviteEmail("");
-    setInviteRole("Viewer");
-    setInviteOpen(false);
-  }, [inviteEmail, inviteName, inviteRole, members]);
 
   /* ---------------- CSV bulk import (client preview) ---------------- */
   // const onCsvSelect = useCallback((file?: File | null) => {
@@ -245,92 +187,30 @@ export default function MembersPage() {
                 />
               </div>
 
-              <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-indigo-600 hover:bg-indigo-700">
-                    Invite
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Invite a teammate</DialogTitle>
-                    <DialogDescription>
-                      Send an invite via email and assign a role.
-                    </DialogDescription>
-                  </DialogHeader>
+              <InviteModal members={members} setMembers={setMembers} />
 
-                  <div className="grid gap-3 py-2">
-                    <label className="text-xs text-slate-400">Full name</label>
-                    <Input
-                      value={inviteName}
-                      onChange={(e) => setInviteName(e.target.value)}
-                      placeholder="Ava Johnson"
-                    />
-
-                    <label className="text-xs text-slate-400">Email</label>
-                    <Input
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="ava@company.com"
-                    />
-
-                    <label className="text-xs text-slate-400">Role</label>
-                    <Select
-                      onValueChange={(v) => setInviteRole(v as Role)}
-                      defaultValue={inviteRole}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue>{inviteRole}</SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Owner">Owner</SelectItem>
-                        <SelectItem value="Admin">Admin</SelectItem>
-                        <SelectItem value="Editor">Editor</SelectItem>
-                        <SelectItem value="Viewer">Viewer</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    {inviteError ? (
-                      <div className="text-xs text-rose-400">{inviteError}</div>
-                    ) : null}
-                  </div>
-
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button
-                        variant="ghost"
-                        onClick={() => setInviteOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                    </DialogClose>
-                    <Button onClick={onInvite}>Send invite</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-
-              <div>
+              {/* <div>
                 <label className="inline-flex items-center gap-2 cursor-pointer">
                   <input
-                    // ref={fileRef as any}
+                    ref={fileRef as any}
                     type="file"
                     accept=".csv"
                     className="hidden"
-                    // onChange={(e) => {
-                    //   const f = e.target.files?.[0] ?? null;
-                    //   onCsvSelect(f || undefined);
-                    // }}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] ?? null;
+                      onCsvSelect(f || undefined);
+                    }}
                   />
-                  {/* <Button
-                    // onClick={() =>
-                    //   (fileRef.current as HTMLInputElement | null)?.click()
-                    // }
+                  <Button
+                    onClick={() =>
+                      (fileRef.current as HTMLInputElement | null)?.click()
+                    }
                     variant="outline"
                   >
                     Import CSV
-                  </Button> */}
+                  </Button>
                 </label>
-              </div>
+              </div> */}
             </div>
           </div>
 

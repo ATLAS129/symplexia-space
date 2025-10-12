@@ -1,11 +1,15 @@
 export default function RightAside({
   children,
+  width = "w-1/5",
 }: {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  width?: string;
 }) {
   return (
-    <aside className="hidden 2xl:flex w-1/5 border-l border-white/6 bg-gradient-to-b from-black/60 to-transparent justify-center">
-      <div className="fixed p-6 w-1/5 h-full flex flex-col">
+    <aside
+      className={`hidden 2xl:flex ${width} border-l border-white/6 bg-gradient-to-b from-black/60 to-transparent justify-center`}
+    >
+      <div className={`fixed p-6 ${width} h-full flex flex-col`}>
         <div className="flex pb-3 items-center justify-end gap-4 border-b border-slate-800">
           {/* <div className="rounded-full bg-white/6 px-3 py-1 text-xs">
             Workspace • Symplexia

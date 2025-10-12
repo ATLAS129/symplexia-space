@@ -26,7 +26,7 @@ export default async function layout({
   const { workspaceId } = await params;
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col md:flex-row">
       {/* Mobile menu */}
       <div className="lg:hidden p-3">
         <Sheet>

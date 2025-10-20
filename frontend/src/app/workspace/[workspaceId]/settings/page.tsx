@@ -8,11 +8,20 @@ import { Separator } from "@/components/ui/Separator";
 import { Avatar } from "@/components/ui/Avatar";
 import { Textarea } from "@/components/ui/Textarea";
 import AvatarEdit from "@/components/AvatarEdit";
+import { useAppSelector } from "@/lib/hooks";
+import { Member } from "@/types/types";
 
 export default function SettingsPage() {
   const [settingsType, setSettingsType] = useState<
     "general" | "members" | "security" | "danger"
   >("general");
+
+  const projectId: string = useAppSelector(
+    (state) => state.workspace.projectId
+  ) as string;
+  const members: Member[] = useAppSelector(
+    (state) => state.workspace.members
+  ) as Member[];
 
   return (
     <>
@@ -52,10 +61,19 @@ export default function SettingsPage() {
 
           <div className="flex-1 flex flex-col gap-6 p-6 overflow-y-scroll">
             <h2 className="text-lg font-semibold">General</h2>
-            <div className="flex justify-between items-center gap-5">
+            <div className="flex justify-between items-center gap-5 border-b border-slate-800 pb-6">
               <div className="flex-1 flex flex-col gap-4">
                 <div className="w-full flex gap-4">
-                  <Label htmlFor="project-name">Project name: </Label>
+                  <Label htmlFor="project-id">Workspace ID: </Label>
+                  <Input
+                    id="project-id"
+                    className="w-full rounded-lg flex-1 bg-slate-800"
+                    value={projectId as string}
+                    disabled
+                  />
+                </div>
+                <div className="w-full flex gap-4">
+                  <Label htmlFor="project-name">Workspace name: </Label>
                   <Input
                     id="project-name"
                     className="w-full rounded-lg flex-1 h-14 bg-slate-800 flex items-center"
@@ -71,6 +89,25 @@ export default function SettingsPage() {
               </div>
               <div>
                 <AvatarEdit />
+              </div>
+            </div>
+
+            <h2 className="text-lg font-semibold">Members</h2>
+            <div className="w-full min-h-[250px] bg-slate-800 rounded-lg p-2">
+              <div className="flex justify-evenly items-center">
+                <h2>Name</h2>
+                <h2>Role</h2>
+              </div>
+              <div className="flex flex-col">
+                {members.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex justify-evenly items-center"
+                  >
+                    <span>{member.name}</span>
+                    <span>{member.role}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

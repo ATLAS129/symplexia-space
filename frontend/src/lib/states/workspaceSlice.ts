@@ -1,4 +1,4 @@
-import { BoardState, Task, Columns } from "@/types/types";
+import { BoardState, Task, Columns, Member } from "@/types/types";
 import { createSlice } from "@reduxjs/toolkit";
 
 function buildBoard(tasks: Task[]): BoardState {
@@ -12,7 +12,7 @@ function buildBoard(tasks: Task[]): BoardState {
 interface WorkspaceState {
   projectId: string;
   name: string;
-  members: string[];
+  members: Member[];
   board: BoardState;
   tasks: Task[];
 }

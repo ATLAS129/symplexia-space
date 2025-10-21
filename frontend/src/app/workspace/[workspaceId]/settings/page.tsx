@@ -10,6 +10,14 @@ import { Textarea } from "@/components/ui/Textarea";
 import AvatarEdit from "@/components/AvatarEdit";
 import { useAppSelector } from "@/lib/hooks";
 import { Member } from "@/types/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
+import Link from "next/link";
 
 export default function SettingsPage() {
   const [settingsType, setSettingsType] = useState<
@@ -23,96 +31,126 @@ export default function SettingsPage() {
     (state) => state.workspace.members
   ) as Member[];
 
+  console.log(members);
+
   return (
-    <>
-      <section className="flex-1 p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-              Settings
-            </h1>
-            <p className="mt-1 text-slate-400 text-xs">Manage project</p>
-          </div>
-          <div className={`fixed top-0 right-0 p-6 w-1/6 flex flex-col`}>
-            <div className="flex pb-3 items-center justify-end gap-4 border-slate-800">
-              <input
-                className="hidden md:inline-block rounded-2xl bg-white/4 px-3 py-2 text-sm"
-                placeholder="Search docs, tasks, agents..."
-              />
-              <div className="min-w-9 min-h-9 rounded-full bg-gradient-to-r from-pink-500 to-indigo-500 flex items-center justify-center">
-                Y
-              </div>
+    <section className="flex-1 p-6">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+            Settings
+          </h1>
+          <p className="mt-1 text-slate-400 text-xs">Manage project</p>
+        </div>
+        <div className={`fixed top-0 right-0 p-6 w-1/6 flex flex-col`}>
+          <div className="flex pb-3 items-center justify-end gap-4 border-slate-800">
+            <input
+              className="hidden md:inline-block rounded-2xl bg-white/4 px-3 py-2 text-sm"
+              placeholder="Search docs, tasks, agents..."
+            />
+            <div className="min-w-9 min-h-9 rounded-full bg-gradient-to-r from-pink-500 to-indigo-500 flex items-center justify-center">
+              Y
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="w-full h-[calc(100vh-20%)] rounded-lg bg-slate-900 flex">
-          {/* Settings content */}
+      <div className="w-full h-[calc(100vh-20%)] rounded-lg bg-slate-900 flex">
+        {/* Settings content */}
 
-          <aside className="p-6 h-full border-r [&>button]:w-full [&>button]:py-3 [&>button]:px-2 [&>button]:rounded-lg flex flex-col gap-2 border-slate-800">
-            <Button variant="ghost">General</Button>
-            <Separator />
-            <Button variant="ghost">Members</Button>
-            <Separator />
-            <Button variant="ghost">Security</Button>
-            <Separator />
-            <Button variant="ghost">Danger</Button>
-          </aside>
+        <aside className="p-6 h-full border-r [&>button]:w-full [&>button]:py-3 [&>button]:px-2 [&>button]:rounded-lg flex flex-col gap-2 border-slate-800">
+          <Button variant="ghost">General</Button>
+          <Separator />
+          <Button variant="ghost">
+            <Link href="#members">Members</Link>
+          </Button>
+          <Separator />
+          <Button variant="ghost">Security</Button>
+          <Separator />
+          <Button variant="ghost">Danger</Button>
+        </aside>
 
-          <div className="flex-1 flex flex-col gap-6 p-6 overflow-y-scroll">
-            <h2 className="text-lg font-semibold">General</h2>
-            <div className="flex justify-between items-center gap-5 border-b border-slate-800 pb-6">
-              <div className="flex-1 flex flex-col gap-4">
-                <div className="w-full flex gap-4">
-                  <Label htmlFor="project-id">Workspace ID: </Label>
-                  <Input
-                    id="project-id"
-                    className="w-full rounded-lg flex-1 bg-slate-800"
-                    value={projectId as string}
-                    disabled
-                  />
-                </div>
-                <div className="w-full flex gap-4">
-                  <Label htmlFor="project-name">Workspace name: </Label>
-                  <Input
-                    id="project-name"
-                    className="w-full rounded-lg flex-1 h-14 bg-slate-800 flex items-center"
-                  />
-                </div>
-                <div className="w-full flex gap-4">
-                  <Label htmlFor="project-description">Description: </Label>
-                  <textarea
-                    id="project-description"
-                    className="border max-h-[250px] min-h-14 rounded-lg flex-1 h-48 bg-slate-800 py-3 px-2 text-wrap"
-                  />
-                </div>
+        <div className="flex-1 flex flex-col gap-6 p-6 overflow-y-scroll">
+          <h2 className="text-lg font-semibold">General</h2>
+          <div className="flex justify-between items-center gap-5 border-b border-slate-800 pb-6">
+            <div className="flex-1 flex flex-col gap-4">
+              <div className="w-full flex gap-4">
+                <Label htmlFor="project-id">Workspace ID: </Label>
+                <Input
+                  id="project-id"
+                  className="w-full rounded-lg flex-1 bg-slate-800"
+                  value={projectId as string}
+                  disabled
+                />
               </div>
-              <div>
-                <AvatarEdit />
+              <div className="w-full flex gap-4">
+                <Label htmlFor="project-name">Workspace name: </Label>
+                <Input
+                  id="project-name"
+                  className="w-full rounded-lg flex-1 h-14 bg-slate-800 flex items-center"
+                />
+              </div>
+              <div className="w-full flex gap-4">
+                <Label htmlFor="project-description">Description: </Label>
+                <textarea
+                  id="project-description"
+                  className="border max-h-[250px] min-h-14 rounded-lg flex-1 h-48 bg-slate-800 py-3 px-2 text-wrap"
+                />
               </div>
             </div>
+            <div>
+              <AvatarEdit />
+            </div>
+          </div>
 
-            <h2 className="text-lg font-semibold">Members</h2>
-            <div className="w-full min-h-[250px] bg-slate-800 rounded-lg p-2">
-              <div className="flex justify-evenly items-center">
-                <h2>Name</h2>
-                <h2>Role</h2>
-              </div>
-              <div className="flex flex-col">
-                {members.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex justify-evenly items-center"
-                  >
-                    <span>{member.name}</span>
-                    <span>{member.role}</span>
+          <h2 className="text-lg font-semibold">Members</h2>
+          <div
+            id="members"
+            className="w-1/2 mx-auto min-h-[250px] bg-slate-800 rounded-lg p-2 overflow-y-auto"
+          >
+            <div className="flex items-center">
+              <h2 className="w-1/2 text-center">Member</h2>
+              <h2 className="w-1/4 text-center">Role</h2>
+            </div>
+            <div className="flex flex-col p-2">
+              {members.map((member) => (
+                <div
+                  key={member.id}
+                  className="flex items-center justify-between p-2 hover:bg-slate-700 rounded-lg"
+                >
+                  <div className="flex gap-2 w-1/2 items-center justify-evenly">
+                    <div className="w-1/5">
+                      <Avatar className="" />
+                    </div>
+
+                    <span className="w-1/4">{member.name}</span>
+                    <span className="text-slate-400 text-sm w-1/3">
+                      {member.email}
+                    </span>
                   </div>
-                ))}
-              </div>
+
+                  <div className="w-1/4 flex justify-center">
+                    <Select defaultValue={member.role.toLowerCase()}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="owner">Owner</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="editor">Editor</SelectItem>
+                        <SelectItem value="viewer">Viewer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-1/4 flex justify-center">
+                    <Button variant="destructive">Remove</Button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }

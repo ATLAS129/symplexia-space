@@ -20,7 +20,11 @@ interface WorkspaceState {
 const initialState: WorkspaceState = {
   name: "",
   projectId: "",
-  members: [],
+  members: [
+    { id: "1", name: "Eli", email: "eli@example.com", role: "Owner" },
+    { id: "2", name: "Maya", email: "maya@example.com", role: "Editor" },
+    { id: "3", name: "Jon", email: "jon@example.com", role: "Viewer" },
+  ],
   tasks: [
     // {
     //   id: "t-1",

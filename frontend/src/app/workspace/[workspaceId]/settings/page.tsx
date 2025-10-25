@@ -18,6 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/Select";
 import Link from "next/link";
+import InviteModal from "@/components/members/InviteModal";
+import { SecuritySettings } from "@/components/settings/SecuritySettings";
 
 export default function SettingsPage() {
   const [settingsType, setSettingsType] = useState<
@@ -55,24 +57,33 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="w-full h-[calc(100vh-20%)] rounded-lg bg-slate-900 flex">
+      <div className="w-full rounded-lg bg-slate-900 flex">
         {/* Settings content */}
 
         <aside className="p-6 h-full border-r [&>button]:w-full [&>button]:py-3 [&>button]:px-2 [&>button]:rounded-lg flex flex-col gap-2 border-slate-800">
-          <Button variant="ghost">General</Button>
+          <Button variant="ghost">
+            <Link href="#general">General</Link>
+          </Button>
           <Separator />
           <Button variant="ghost">
             <Link href="#members">Members</Link>
           </Button>
           <Separator />
-          <Button variant="ghost">Security</Button>
+          <Button variant="ghost">
+            <Link href="#security">Security</Link>
+          </Button>
           <Separator />
-          <Button variant="ghost">Danger</Button>
+          <Button variant="ghost">
+            <Link href="#danger">Danger</Link>
+          </Button>
         </aside>
 
-        <div className="flex-1 flex flex-col gap-6 p-6 overflow-y-scroll">
+        <div className="flex-1 flex flex-col gap-6 p-6">
           <h2 className="text-lg font-semibold">General</h2>
-          <div className="flex justify-between items-center gap-5 border-b border-slate-800 pb-6">
+          <div
+            id="general"
+            className="flex justify-between items-center gap-5 border-b border-slate-800 pb-6"
+          >
             <div className="flex-1 flex flex-col gap-4">
               <div className="w-full flex gap-4">
                 <Label htmlFor="project-id">Workspace ID: </Label>
@@ -105,48 +116,61 @@ export default function SettingsPage() {
 
           <h2 className="text-lg font-semibold">Members</h2>
           <div
+            className="flex items-center justify-center pb-2 px-2 border-b border-slate-700"
             id="members"
-            className="w-1/2 mx-auto min-h-[250px] bg-slate-800 rounded-lg p-2 overflow-y-auto"
           >
-            <div className="flex items-center">
-              <h2 className="w-1/2 text-center">Member</h2>
-              <h2 className="w-1/4 text-center">Role</h2>
-            </div>
-            <div className="flex flex-col p-2">
-              {members.map((member) => (
-                <div
-                  key={member.id}
-                  className="flex items-center justify-between p-2 hover:bg-slate-700 rounded-lg"
-                >
-                  <div className="flex gap-2 w-1/2 items-center justify-evenly">
-                    <div className="w-1/5">
-                      <Avatar className="" />
+            <div className="w-1/2 mx-auto min-h-[250px] bg-slate-800 rounded-lg p-2 border-b border-slate-800 overflow-y-scroll">
+              <div className="flex items-center justify-center pb-2 px-2 border-b border-slate-700">
+                <h2 className="text-center flex-1">Members</h2>
+                <InviteModal />
+              </div>
+              <div className="flex flex-col p-2">
+                {members.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-2 hover:bg-slate-700 rounded-lg"
+                  >
+                    <div className="flex gap-2 w-1/2 items-center justify-evenly">
+                      <div className="w-1/5">
+                        <Avatar />
+                      </div>
+
+                      <span className="w-1/4">{member.name}</span>
+                      <span className="text-slate-400 text-sm w-1/3">
+                        {member.email}
+                      </span>
                     </div>
+                    <div className="w-1/4 flex justify-center">
+                      <Button variant="destructive">Remove</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
-                    <span className="w-1/4">{member.name}</span>
-                    <span className="text-slate-400 text-sm w-1/3">
-                      {member.email}
-                    </span>
-                  </div>
+          <h2 className="text-lg font-semibold">Security</h2>
+          <div
+            id="security"
+            className="flex justify-center items-center gap-5 border-b border-slate-800 pb-6"
+          >
+            <div className="flex-1 flex flex-col gap-4">
+              <SecuritySettings />
+            </div>
+          </div>
 
-                  <div className="w-1/4 flex justify-center">
-                    <Select defaultValue={member.role.toLowerCase()}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="owner">Owner</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="editor">Editor</SelectItem>
-                        <SelectItem value="viewer">Viewer</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="w-1/4 flex justify-center">
-                    <Button variant="destructive">Remove</Button>
-                  </div>
-                </div>
-              ))}
+          <h2 className="text-lg font-semibold">Danger</h2>
+          <div
+            id="danger"
+            className="flex flex-col items-start gap-5 border-b border-slate-800 pb-6"
+          >
+            <div className="flex items-center gap-2">
+              <h2>Transfer ownership</h2>
+              <Button variant="destructive">Transfer</Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <h2>Delete workspace</h2>
+              <Button variant="destructive">Delete</Button>
             </div>
           </div>
         </div>

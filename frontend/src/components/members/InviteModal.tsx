@@ -25,8 +25,8 @@ export default function InviteModal({
   members,
   setMembers,
 }: {
-  members: Member[];
-  setMembers: React.Dispatch<React.SetStateAction<Member[]>>;
+  members?: Member[];
+  setMembers?: React.Dispatch<React.SetStateAction<Member[]>>;
 }) {
   const projectId = useAppSelector((state) => state.workspace.projectId);
 
@@ -49,7 +49,10 @@ export default function InviteModal({
       setInviteError("Please provide the member's name.");
       return;
     }
-    if (members.some((m) => m.email.toLowerCase() === email.toLowerCase())) {
+    if (
+      members &&
+      members.some((m) => m.email.toLowerCase() === email.toLowerCase())
+    ) {
       setInviteError("This email is already a member or invited.");
       return;
     }
@@ -68,7 +71,7 @@ export default function InviteModal({
       invited: true,
     };
 
-    setMembers((prev) => [newMember, ...prev]);
+    if (setMembers) setMembers((prev) => [newMember, ...prev]);
     setInviteName("");
     setInviteEmail("");
     setInviteRole("Viewer");
